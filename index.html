@@ -3,199 +3,3361 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>THE DECEIVER V4.2 • MFD Studio</title>
+<title>THE DECEIVER V4.3</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-:root{--bg:#050812;--p:#0b1220ee;--p2:#101a2b;--l:#263751;--c:#65ddff;--g:#61e5a4;--r:#ff5f7e;--t:#eef6ff;--m:#8493aa}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--t);font-family:Inter,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}.hidden{display:none!important}
-.screen{position:absolute;inset:0;display:none}.screen.active{display:flex}#home{align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 50% 10%,#163052,#060913 55%,#03050a)}
-.card{width:min(980px,100%);max-height:94vh;overflow:auto;background:var(--p);border:1px solid var(--l);border-radius:24px;padding:24px;box-shadow:0 30px 100px #000b;backdrop-filter:blur(15px)}
-.logo{text-align:center;font-size:clamp(36px,8vw,72px);font-weight:1000;letter-spacing:3px;color:var(--c);text-shadow:0 0 30px #55dfff55}.sub{text-align:center;color:var(--m);margin:6px 0 24px}
-.tabs{display:flex;gap:8px;margin-bottom:15px}.tab{flex:1;padding:13px;border-radius:12px;background:#111a2a;color:var(--m)}.tab.active{background:#173653;color:var(--c)}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}.field{display:flex;flex-direction:column;gap:6px}.full{grid-column:1/-1}label{font-size:12px;color:var(--m)}
-input,select,textarea{width:100%;background:#080f1b;color:#fff;border:1px solid #293a55;border-radius:11px;padding:12px;outline:0}.btn{padding:12px 15px;border-radius:11px;background:#172236;color:#dceaff}.primary{width:100%;padding:14px;border-radius:12px;margin-top:12px;background:linear-gradient(135deg,#24bfff,#6375ff);color:#fff;font-weight:900}.danger{background:#401b29;color:#ff9db0}.info{padding:11px;border-radius:11px;background:#0c1727;border:1px solid #1e3049;color:#8190a8;font-size:12px;line-height:1.5;margin-top:12px}
-#lobby{align-items:center;justify-content:center;padding:15px}.lobby{width:min(1080px,100%);height:min(880px,95vh);display:grid;grid-template-columns:1fr 340px;gap:12px}.panel{background:#0b121e;border:1px solid #22314a;border-radius:18px;padding:16px;overflow:auto}.title{font-weight:900;font-size:20px;margin-bottom:12px}.code{font-size:38px;letter-spacing:8px;text-align:center;padding:18px;border-radius:14px;background:#071521;color:var(--c);border:1px solid #244b64;margin-bottom:13px}.prow{display:flex;align-items:center;gap:9px;padding:10px;border-radius:11px;background:#101a29;margin:7px 0}.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#19374a}.grow{flex:1}.small{font-size:11px;color:var(--m)}.badge{padding:5px 8px;border-radius:8px;background:#16283e;color:#8fe4ff;font-size:10px}
-#game{background:#05070c}.gamecanvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}.hud{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:7px;pointer-events:none}.hbox{background:#07101bdd;border:1px solid #263852;border-radius:10px;padding:8px 11px}.tasks{flex:1}.bar{height:6px;background:#1b2738;border-radius:20px;margin-top:5px;overflow:hidden}.fill{height:100%;width:0;background:var(--g);transition:.2s}.actions{position:absolute;right:14px;bottom:14px;width:260px;display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.action{width:76px;height:52px;border-radius:13px;background:#111b2ae8;border:1px solid #2b3c56;color:#dceaff;font-weight:900;font-size:11px}.action.kill{border-color:#743248;background:#3c1825}.joy{position:absolute;left:18px;bottom:18px;width:145px;height:145px;border-radius:50%;background:#fff1;border:2px solid #fff2;touch-action:none}.stick{position:absolute;left:50%;top:50%;width:60px;height:60px;transform:translate(-50%,-50%);border-radius:50%;background:#66ddff33;border:2px solid #66ddff88}
-.modal{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:15px;background:#000a;backdrop-filter:blur(6px)}.modal.show{display:flex}.modalbox{width:min(720px,100%);max-height:90vh;overflow:auto;background:#0b121e;border:1px solid #30415e;border-radius:20px;padding:19px}.center{text-align:center}.roleicon{font-size:75px}.rolename{font-size:34px;font-weight:1000;margin:8px 0}.good{color:var(--g)}.bad{color:var(--r)}.votes{display:grid;gap:7px}.vote{display:flex;align-items:center;gap:8px;padding:9px;background:#101a29;border-radius:9px}.vote button{margin-left:auto}#toast{position:absolute;z-index:100;left:50%;bottom:22px;transform:translate(-50%,25px);opacity:0;padding:10px 15px;background:#101a29f5;border:1px solid #344b69;border-radius:11px;transition:.2s;pointer-events:none}#toast.show{opacity:1;transform:translate(-50%,0)}
-@media(max-width:720px){.grid{grid-template-columns:1fr}.lobby{grid-template-columns:1fr}.lobby>.panel:nth-child(2){display:none}.actions{width:205px}.action{width:59px}}
+:root{
+ --bg:#050812;
+ --panel:#0b1220ee;
+ --panel2:#101a2b;
+ --line:#263751;
+ --cyan:#65ddff;
+ --green:#61e5a4;
+ --red:#ff5f7e;
+ --yellow:#ffd45d;
+ --text:#eef6ff;
+ --muted:#8493aa;
+}
+
+*{
+ box-sizing:border-box;
+ -webkit-tap-highlight-color:transparent
+}
+
+html,body{
+ margin:0;
+ width:100%;
+ height:100%;
+ overflow:hidden;
+ background:var(--bg);
+ color:var(--text);
+ font-family:Arial,Inter,sans-serif
+}
+
+button,input,select,textarea{
+ font:inherit
+}
+
+button{
+ cursor:pointer;
+ border:0
+}
+
+.hidden{
+ display:none!important
+}
+
+.screen{
+ position:absolute;
+ inset:0;
+ display:none
+}
+
+.screen.active{
+ display:flex
+}
+
+/* HOME */
+
+#home{
+ align-items:center;
+ justify-content:center;
+ padding:15px;
+ background:
+ radial-gradient(circle at 50% 5%,#173657,#060913 55%,#03050a)
+}
+
+.card{
+ width:min(950px,100%);
+ max-height:95vh;
+ overflow:auto;
+ padding:24px;
+ border:1px solid var(--line);
+ border-radius:24px;
+ background:var(--panel);
+ box-shadow:0 30px 100px #000b;
+ backdrop-filter:blur(15px)
+}
+
+.logo{
+ text-align:center;
+ font-size:clamp(38px,8vw,72px);
+ font-weight:1000;
+ letter-spacing:3px;
+ color:var(--cyan);
+ text-shadow:0 0 30px #55dfff55
+}
+
+.sub{
+ text-align:center;
+ color:var(--muted);
+ margin:7px 0 24px
+}
+
+.tabs{
+ display:flex;
+ gap:8px;
+ margin-bottom:15px
+}
+
+.tab{
+ flex:1;
+ padding:13px;
+ border-radius:12px;
+ background:#111a2a;
+ color:var(--muted)
+}
+
+.tab.active{
+ background:#173653;
+ color:var(--cyan)
+}
+
+.grid{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:11px
+}
+
+.field{
+ display:flex;
+ flex-direction:column;
+ gap:6px
+}
+
+.full{
+ grid-column:1/-1
+}
+
+label{
+ font-size:12px;
+ color:var(--muted)
+}
+
+input,select,textarea{
+ width:100%;
+ background:#080f1b;
+ color:white;
+ border:1px solid #293a55;
+ border-radius:11px;
+ padding:12px;
+ outline:none
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+ border-color:var(--cyan)
+}
+
+.btn{
+ padding:12px 15px;
+ border-radius:11px;
+ background:#172236;
+ color:#dceaff
+}
+
+.primary{
+ width:100%;
+ padding:14px;
+ margin-top:12px;
+ border-radius:12px;
+ background:linear-gradient(135deg,#24bfff,#6375ff);
+ color:white;
+ font-weight:900
+}
+
+.danger{
+ background:#401b29;
+ color:#ff9db0
+}
+
+.info{
+ padding:11px;
+ border-radius:11px;
+ background:#0c1727;
+ border:1px solid #1e3049;
+ color:#8190a8;
+ font-size:12px;
+ line-height:1.5;
+ margin-top:12px
+}
+
+/* LOBBY */
+
+#lobby{
+ align-items:center;
+ justify-content:center;
+ padding:15px
+}
+
+.lobby{
+ width:min(1080px,100%);
+ height:min(880px,95vh);
+ display:grid;
+ grid-template-columns:1fr 340px;
+ gap:12px
+}
+
+.panel{
+ background:#0b121e;
+ border:1px solid #22314a;
+ border-radius:18px;
+ padding:16px;
+ overflow:auto
+}
+
+.title{
+ font-weight:900;
+ font-size:20px;
+ margin-bottom:12px
+}
+
+.code{
+ font-size:38px;
+ letter-spacing:8px;
+ text-align:center;
+ padding:18px;
+ border-radius:14px;
+ background:#071521;
+ color:var(--cyan);
+ border:1px solid #244b64;
+ margin-bottom:13px
+}
+
+.prow{
+ display:flex;
+ align-items:center;
+ gap:9px;
+ padding:10px;
+ border-radius:11px;
+ background:#101a29;
+ margin:7px 0
+}
+
+.avatar{
+ width:36px;
+ height:36px;
+ border-radius:50%;
+ display:grid;
+ place-items:center;
+ background:#19374a
+}
+
+.grow{
+ flex:1
+}
+
+.small{
+ font-size:11px;
+ color:var(--muted)
+}
+
+.badge{
+ padding:5px 8px;
+ border-radius:8px;
+ background:#16283e;
+ color:#8fe4ff;
+ font-size:10px
+}
+
+.ready{
+ background:#16452f;
+ color:#7dffbd
+}
+
+/* GAME */
+
+#game{
+ background:#05070c
+}
+
+.gamecanvas{
+ position:absolute;
+ inset:0;
+ width:100%;
+ height:100%;
+ touch-action:none
+}
+
+.hud{
+ position:absolute;
+ top:10px;
+ left:10px;
+ right:10px;
+ display:flex;
+ gap:7px;
+ pointer-events:none
+}
+
+.hbox{
+ background:#07101ddd;
+ border:1px solid #263852;
+ border-radius:10px;
+ padding:8px 11px
+}
+
+.tasks{
+ flex:1
+}
+
+.bar{
+ height:6px;
+ background:#1b2738;
+ border-radius:20px;
+ margin-top:5px;
+ overflow:hidden
+}
+
+.fill{
+ height:100%;
+ width:0;
+ background:var(--green);
+ transition:.2s
+}
+
+.actions{
+ position:absolute;
+ right:14px;
+ bottom:14px;
+ width:260px;
+ display:flex;
+ gap:7px;
+ flex-wrap:wrap;
+ justify-content:flex-end
+}
+
+.action{
+ width:76px;
+ height:52px;
+ border-radius:13px;
+ background:#111b2ae8;
+ border:1px solid #2b3c56;
+ color:#dceaff;
+ font-weight:900;
+ font-size:11px
+}
+
+.action.kill{
+ border-color:#743248;
+ background:#3c1825
+}
+
+.joy{
+ position:absolute;
+ left:18px;
+ bottom:18px;
+ width:145px;
+ height:145px;
+ border-radius:50%;
+ background:#fff1;
+ border:2px solid #fff2;
+ touch-action:none
+}
+
+.stick{
+ position:absolute;
+ left:50%;
+ top:50%;
+ width:60px;
+ height:60px;
+ transform:translate(-50%,-50%);
+ border-radius:50%;
+ background:#66ddff33;
+ border:2px solid #66ddff88
+}
+
+/* MODAL */
+
+.modal{
+ position:absolute;
+ inset:0;
+ z-index:30;
+ display:none;
+ align-items:center;
+ justify-content:center;
+ padding:15px;
+ background:#000a;
+ backdrop-filter:blur(6px)
+}
+
+.modal.show{
+ display:flex
+}
+
+.modalbox{
+ width:min(720px,100%);
+ max-height:90vh;
+ overflow:auto;
+ background:#0b121e;
+ border:1px solid #30415e;
+ border-radius:20px;
+ padding:19px
+}
+
+.center{
+ text-align:center
+}
+
+.roleicon{
+ font-size:75px
+}
+
+.rolename{
+ font-size:34px;
+ font-weight:1000;
+ margin:8px 0
+}
+
+.good{
+ color:var(--green)
+}
+
+.bad{
+ color:var(--red)
+}
+
+.votes{
+ display:grid;
+ gap:7px
+}
+
+.vote{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ padding:9px;
+ background:#101a29;
+ border-radius:9px
+}
+
+.vote button{
+ margin-left:auto
+}
+
+#toast{
+ position:absolute;
+ z-index:100;
+ left:50%;
+ bottom:22px;
+ transform:translate(-50%,25px);
+ opacity:0;
+ padding:10px 15px;
+ background:#101a29f5;
+ border:1px solid #344b69;
+ border-radius:11px;
+ transition:.2s;
+ pointer-events:none;
+ white-space:nowrap
+}
+
+#toast.show{
+ opacity:1;
+ transform:translate(-50%,0)
+}
+
+.status{
+ display:inline-flex;
+ align-items:center;
+ gap:5px;
+ font-size:11px;
+ color:var(--muted)
+}
+
+.dot{
+ width:8px;
+ height:8px;
+ border-radius:50%;
+ background:#777
+}
+
+.dot.on{
+ background:var(--green);
+ box-shadow:0 0 10px var(--green)
+}
+
+@media(max-width:720px){
+ .grid{
+  grid-template-columns:1fr
+ }
+
+ .lobby{
+  grid-template-columns:1fr
+ }
+
+ .lobby>.panel:nth-child(2){
+  display:none
+ }
+
+ .actions{
+  width:205px
+ }
+
+ .action{
+  width:59px
+ }
+
+ .code{
+  font-size:30px
+ }
+}
 </style>
 </head>
+
 <body>
-<section id="home" class="screen active"><div class="card">
-<div class="logo">THE DECEIVER</div><div class="sub">V4.2 • MFD STUDIO • SERVER READY</div>
-<div class="tabs"><button id="tc" class="tab active">TẠO PHÒNG</button><button id="tj" class="tab">VÀO PHÒNG</button></div>
-<div id="createBox"><div class="grid">
-<div class="field"><label>Tên người chơi</label><input id="nameCreate" maxlength="16" placeholder="Tên"></div>
-<div class="field"><label>Mật khẩu</label><input id="passCreate" type="password"></div>
-<div class="field"><label>Tối đa người chơi</label><select id="maxP"><option>3</option><option>4</option><option>5</option><option>6</option><option selected>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select></div>
-<div class="field"><label>Kẻ Sát Nhân</label><select id="killers"><option selected>1</option><option>2</option><option>3</option></select></div>
-<div class="field"><label>Bot</label><select id="bots"><option>0</option><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option></select></div>
-<div class="field"><label>Độ khó</label><select id="difficulty"><option>easy</option><option selected>normal</option><option>hardcore</option></select></div>
-<div class="field"><label>Số round</label><select id="rounds"><option>1</option><option selected>5</option><option>10</option></select></div>
-<div class="field"><label>Tên người chết</label><select id="hideDead"><option value="true" selected>Ẩn</option><option value="false">Hiện</option></select></div>
-</div><button id="create" class="primary">TẠO PHÒNG</button></div>
-<div id="joinBox" class="hidden"><div class="grid"><div class="field"><label>Tên</label><input id="nameJoin" maxlength="16"></div><div class="field"><label>Mã phòng</label><input id="codeJoin" maxlength="6"></div><div class="field full"><label>Mật khẩu</label><input id="passJoin" type="password"></div></div><button id="join" class="primary">VÀO PHÒNG</button></div>
-<div class="info">Bản V4.2 dùng Supabase Auth ẩn danh + Realtime Broadcast. Không cần RPC/SQL phức tạp; phù hợp game nhỏ.</div>
-</div></section>
-<section id="lobby" class="screen"><div class="lobby"><div class="panel"><div class="title">PHÒNG CHỜ</div><div id="roomCode" class="code">------</div><div id="players"></div><div style="display:flex;gap:7px"><button id="ready" class="btn" style="flex:1">SẴN SÀNG</button><button id="leave" class="btn danger" style="flex:1">RỜI PHÒNG</button></div><button id="start" class="primary hidden">BẮT ĐẦU</button></div><div class="panel"><div class="title">CÀI ĐẶT</div><div id="settings"></div></div></div></section>
-<section id="game" class="screen"><canvas id="canvas" class="gamecanvas"></canvas><div class="hud"><div id="roleHud" class="hbox">PLAYER</div><div id="roundHud" class="hbox">ROUND 1</div><div class="hbox tasks">TASKS<div class="bar"><div id="taskFill" class="fill"></div></div></div></div><div class="actions"><button id="taskBtn" class="action">TASK</button><button id="killBtn" class="action kill">KILL</button><button id="reportBtn" class="action">REPORT</button><button id="meetingBtn" class="action">MEETING</button></div><div id="joy" class="joy"><div id="stick" class="stick"></div></div></section>
-<div id="roleModal" class="modal"><div class="modalbox center"><div id="roleIcon" class="roleicon">🦆</div><div id="roleName" class="rolename good">NGƯỜI THƯỜNG</div><p id="roleDesc"></p><button id="roleOK" class="primary">TIẾP TỤC</button></div></div>
-<div id="taskModal" class="modal"><div class="modalbox"><div class="title">TASK</div><div id="taskBtns" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div><button id="taskClose" class="primary">ĐÓNG</button></div></div>
-<div id="meetingModal" class="modal"><div class="modalbox"><div class="title">MEETING</div><div id="meetingReason" class="info"></div><div id="meetingTimer" style="text-align:center;font-size:25px;font-weight:900;color:var(--c);margin:10px">30</div><textarea id="argument" rows="3" maxlength="500" placeholder="Lập luận..."></textarea><div class="title">BỎ PHIẾU</div><div id="votes" class="votes"></div><button id="skip" class="btn" style="width:100%;margin-top:8px">BỎ QUA</button></div></div>
-<div id="resultModal" class="modal"><div class="modalbox center"><div id="resultTitle" class="rolename"></div><p id="resultDesc"></p><button id="nextRound" class="primary">ROUND TIẾP</button><button id="backLobby" class="btn" style="width:100%;margin-top:8px">VỀ LOBBY</button></div></div>
+
+<!-- HOME -->
+<section id="home" class="screen active">
+<div class="card">
+
+<div class="logo">THE DECEIVER</div>
+
+<div class="sub">
+ V4.3 • MFD STUDIO • REALTIME
+</div>
+
+<div class="tabs">
+ <button id="tc" class="tab active">TẠO PHÒNG</button>
+ <button id="tj" class="tab">VÀO PHÒNG</button>
+</div>
+
+<!-- CREATE -->
+<div id="createBox">
+
+<div class="grid">
+
+<div class="field">
+<label>Tên người chơi</label>
+<input id="nameCreate" maxlength="16" placeholder="Tên">
+</div>
+
+<div class="field">
+<label>Mật khẩu phòng</label>
+<input id="passCreate" type="password" placeholder="Có thể để trống">
+</div>
+
+<div class="field">
+<label>Tối đa người chơi</label>
+<select id="maxP">
+<option>3</option>
+<option>4</option>
+<option>5</option>
+<option>6</option>
+<option selected>8</option>
+<option>9</option>
+<option>10</option>
+<option>11</option>
+<option>12</option>
+</select>
+</div>
+
+<div class="field">
+<label>Kẻ Sát Nhân</label>
+<select id="killers">
+<option selected>1</option>
+<option>2</option>
+<option>3</option>
+</select>
+</div>
+
+<div class="field">
+<label>Bot</label>
+<select id="bots">
+<option>0</option>
+<option>1</option>
+<option>2</option>
+<option selected>3</option>
+<option>4</option>
+<option>5</option>
+<option>6</option>
+<option>7</option>
+<option>8</option>
+<option>9</option>
+<option>10</option>
+<option>11</option>
+</select>
+</div>
+
+<div class="field">
+<label>Độ khó</label>
+<select id="difficulty">
+<option>easy</option>
+<option selected>normal</option>
+<option>hardcore</option>
+</select>
+</div>
+
+<div class="field">
+<label>Số round</label>
+<select id="rounds">
+<option>1</option>
+<option selected>5</option>
+<option>10</option>
+</select>
+</div>
+
+<div class="field">
+<label>Tên người chết</label>
+<select id="hideDead">
+<option value="true" selected>Ẩn</option>
+<option value="false">Hiện</option>
+</select>
+</div>
+
+</div>
+
+<button id="create" class="primary">
+ TẠO PHÒNG
+</button>
+
+</div>
+
+<!-- JOIN -->
+<div id="joinBox" class="hidden">
+
+<div class="grid">
+
+<div class="field">
+<label>Tên</label>
+<input id="nameJoin" maxlength="16">
+</div>
+
+<div class="field">
+<label>Mã phòng</label>
+<input id="codeJoin" maxlength="6" placeholder="ABC123">
+</div>
+
+<div class="field full">
+<label>Mật khẩu</label>
+<input id="passJoin" type="password">
+</div>
+
+</div>
+
+<button id="join" class="primary">
+ VÀO PHÒNG
+</button>
+
+</div>
+
+<div class="info">
+<b>V4.3:</b> dùng Supabase Realtime Broadcast.
+Không dùng RPC, không cần SQL function.
+</div>
+
+</div>
+</section>
+
+
+<!-- LOBBY -->
+<section id="lobby" class="screen">
+
+<div class="lobby">
+
+<div class="panel">
+
+<div class="title">PHÒNG CHỜ</div>
+
+<div id="roomCode" class="code">
+------
+</div>
+
+<div style="text-align:center;margin-bottom:10px">
+<span class="status">
+<span id="onlineDot" class="dot"></span>
+<span id="onlineText">Đang kết nối...</span>
+</span>
+</div>
+
+<div id="players"></div>
+
+<div style="display:flex;gap:7px">
+<button id="ready" class="btn" style="flex:1">
+ SẴN SÀNG
+</button>
+
+<button id="leave" class="btn danger" style="flex:1">
+ RỜI PHÒNG
+</button>
+</div>
+
+<button id="start" class="primary hidden">
+ BẮT ĐẦU
+</button>
+
+</div>
+
+<div class="panel">
+
+<div class="title">
+ CÀI ĐẶT
+</div>
+
+<div id="settings"></div>
+
+<div class="info">
+Gửi mã phòng cho bạn bè để họ tham gia.
+</div>
+
+</div>
+
+</div>
+</section>
+
+
+<!-- GAME -->
+<section id="game" class="screen">
+
+<canvas id="canvas" class="gamecanvas"></canvas>
+
+<div class="hud">
+
+<div id="roleHud" class="hbox">
+ PLAYER
+</div>
+
+<div id="roundHud" class="hbox">
+ ROUND 1
+</div>
+
+<div class="hbox tasks">
+ TASKS
+ <div class="bar">
+  <div id="taskFill" class="fill"></div>
+ </div>
+</div>
+
+</div>
+
+<div class="actions">
+
+<button id="taskBtn" class="action">
+ TASK
+</button>
+
+<button id="killBtn" class="action kill">
+ KILL
+</button>
+
+<button id="reportBtn" class="action">
+ REPORT
+</button>
+
+<button id="meetingBtn" class="action">
+ MEETING
+</button>
+
+</div>
+
+<div id="joy" class="joy">
+<div id="stick" class="stick"></div>
+</div>
+
+</section>
+
+
+<!-- ROLE -->
+<div id="roleModal" class="modal">
+
+<div class="modalbox center">
+
+<div id="roleIcon" class="roleicon">
+🦆
+</div>
+
+<div id="roleName" class="rolename good">
+NGƯỜI THƯỜNG
+</div>
+
+<p id="roleDesc"></p>
+
+<button id="roleOK" class="primary">
+ TIẾP TỤC
+</button>
+
+</div>
+
+</div>
+
+
+<!-- TASK -->
+<div id="taskModal" class="modal">
+
+<div class="modalbox">
+
+<div class="title">
+TASK
+</div>
+
+<div id="taskBtns"
+style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+</div>
+
+<button id="taskClose" class="primary">
+ ĐÓNG
+</button>
+
+</div>
+
+</div>
+
+
+<!-- MEETING -->
+<div id="meetingModal" class="modal">
+
+<div class="modalbox">
+
+<div class="title">
+MEETING
+</div>
+
+<div id="meetingReason" class="info"></div>
+
+<div id="meetingTimer"
+style="text-align:center;font-size:25px;font-weight:900;color:var(--cyan);margin:10px">
+30
+</div>
+
+<div class="title">
+BỎ PHIẾU
+</div>
+
+<div id="votes" class="votes"></div>
+
+<button id="skip" class="btn"
+style="width:100%;margin-top:8px">
+ BỎ QUA
+</button>
+
+</div>
+
+</div>
+
+
+<!-- RESULT -->
+<div id="resultModal" class="modal">
+
+<div class="modalbox center">
+
+<div id="resultTitle" class="rolename"></div>
+
+<p id="resultDesc"></p>
+
+<button id="nextRound" class="primary">
+ ROUND TIẾP
+</button>
+
+<button id="backLobby" class="btn"
+style="width:100%;margin-top:8px">
+ VỀ MENU
+</button>
+
+</div>
+
+</div>
+
+
 <div id="toast"></div>
 
-<script>
-const SUPABASE_CONFIG={url:"https://iegmxjyuuaglzpcqyyth.supabase.co",publishableKey:"sb_publishable_nWaQYAQ5u88dWlc8pe3_Ig_wuRm0C2J"};
-const SB=window.supabase?.createClient(SUPABASE_CONFIG.url,SUPABASE_CONFIG.publishableKey,{auth:{persistSession:false}});
-const S={id:null,name:"",room:null,host:false,phase:"home",round:1,me:null,players:new Map(),channel:null,online:false,settings:{},meeting:null,keys:{},joy:{x:0,y:0},last:performance.now()};
-const $=id=>document.getElementById(id), toast=t=>{$("toast").textContent=t;$("toast").classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>$("toast").classList.remove("show"),2200)},show=n=>document.querySelectorAll(".screen").forEach(x=>x.classList.toggle("active",x.id===n));
-const safe=s=>String(s||"").trim().replace(/[<>]/g,"").slice(0,16), dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y), code=()=>Math.random().toString(36).slice(2,8).toUpperCase();
-async function auth(){if(!SB)throw Error("Supabase chưa tải");let {data}=await SB.auth.getSession();if(data.session){S.id=data.session.user.id;return}let r=await SB.auth.signInAnonymously();if(r.error)throw r.error;S.id=r.data.user.id}
-async function rpc(fn,args={}){if(!SB)throw Error("Supabase unavailable");const {data,error}=await SB.rpc(fn,args);if(error)throw error;return data}
-async function createRoom(){try{await auth();let name=safe($("nameCreate").value);if(!name)return toast("Nhập tên.");let settings={max_players:+$("maxP").value,killers:+$("killers").value,bots:+$("bots").value,difficulty:$("difficulty").value,rounds:+$("rounds").value,hide_dead:$("hideDead").value==="true"};let r=await rpc("create_room",{p_name:name,p_password:$("passCreate").value||null,p_settings:settings});await enter(r,name);S.host=true;toast("Phòng "+S.room.code+" đã tạo")}catch(e){toast(e.message||"Không tạo được phòng")}}
-async function joinRoom(){try{await auth();let name=safe($("nameJoin").value),code=$("codeJoin").value.trim().toUpperCase();if(!name||code.length!==6)return toast("Tên hoặc mã phòng không hợp lệ.");let r=await rpc("join_room",{p_code:code,p_password:$("passJoin").value||null,p_name:name});await enter(r,name);toast("Đã vào phòng")}catch(e){toast(e.message||"Không vào được phòng")}}
-async function enter(r,name){S.name=name;S.room=r;S.phase="lobby";S.me={id:S.id,name,alive:true,role:null,x:450,y:350,task:0};await net();show("lobby");await sync();renderLobby()}
-async function net(){if(!SB||!S.room?.code)return;S.channel=SB.channel("td_room_"+S.room.code,{config:{broadcast:{self:true},presence:{key:S.id}}});S.channel.on("broadcast",{event:"refresh"},()=>sync()).subscribe(s=>S.online=s==="SUBSCRIBED")}
-async function sync(){
- if(!S.room||!S.channel)return;
- if(S.host)broadcastState(); else send({type:"request_state"});
-}
-async function actRefresh(){await S.channel?.send({type:"broadcast",event:"refresh",payload:{}});setTimeout(sync,150)}
-async function ready(){try{await rpc("set_ready",{p_code:S.room.code,p_ready:!S.me.ready});await actRefresh()}catch(e){toast(e.message)}}
-async function start(){try{let r=await rpc("start_game",{p_code:S.room.code});S.round=r.round||1;S.me.role=r.role||null;await sync();gameStart()}catch(e){toast(e.message||"Không bắt đầu được")}}
-async function getRole(){try{let r=await rpc("get_my_role",{p_code:S.room.code,p_round:S.round});S.me.role=r.role;roleReveal()}catch(e){toast(e.message)}}
-function gameStart(){S.phase="playing";show("game");roleReveal();render()}
-function roleReveal(){let k=S.me?.role==="KILLER";$("roleIcon").textContent=k?"🔪":"🦆";$("roleName").textContent=k?"KẺ SÁT NHÂN":"NGƯỜI THƯỜNG";$("roleName").className="rolename "+(k?"bad":"good");$("roleDesc").textContent=k?"Loại Crew nhưng giữ bí mật.":"Hoàn thành nhiệm vụ và tìm Kẻ Sát Nhân.";$("roleHud").textContent=k?"KẺ SÁT NHÂN":"NGƯỜI THƯỜNG";$("roleHud").style.color=k?"var(--r)":"var(--g)";$("roundHud").textContent="ROUND "+S.round;$("roleModal").classList.add("show")}
-function renderLobby(){$("roomCode").textContent=S.room?.code||"------";$("players").innerHTML="";for(const p of S.players.values()){let d=document.createElement("div");d.className="prow";d.innerHTML=`<div class="avatar">🦆</div><div class="grow"><b>${p.name}</b><div class="small">${p.is_bot?"BOT":"PLAYER"} ${p.is_host?"• HOST":""}</div></div><span class="badge">${p.ready?"READY":"WAIT"}</span>`;$("players").appendChild(d)}let x=S.settings||{};$("settings").innerHTML=`<div class="info">Kẻ Sát Nhân: <b>${x.killers??"?"}</b></div><div class="info">Bot: <b>${x.bots??"?"}</b></div><div class="info">AI: <b>${x.difficulty??"?"}</b></div><div class="info">Rounds: <b>${x.rounds??"?"}</b></div>`;$("start").classList.toggle("hidden",!S.host)}
-async function leave(){try{if(S.room)await rpc("leave_room",{p_code:S.room.code})}catch{}try{await S.channel?.unsubscribe()}catch{}S.room=null;S.players.clear();S.phase="home";show("home")}
-async function kill(){if(S.me?.role!=="KILLER")return toast("Bạn không phải Kẻ Sát Nhân.");let p=[...S.players.values()].filter(x=>x.id!==S.id&&x.alive).sort((a,b)=>dist(S.me,a)-dist(S.me,b))[0];if(!p||dist(S.me,p)>75)return toast("Không có mục tiêu trong tầm.");try{await rpc("server_kill",{p_code:S.room.code,p_target_id:p.id,p_x:S.me.x,p_y:S.me.y});toast("Đã hạ mục tiêu");await actRefresh()}catch(e){toast(e.message)}}
-async function task(){if(!S.me?.alive||S.me.role==="KILLER")return;let seq=[0,1,2,3].sort(()=>Math.random()-.5),i=0;$("taskBtns").innerHTML="";$("taskModal").classList.add("show");[0,1,2,3].forEach(n=>{let b=document.createElement("button");b.className="btn";b.textContent=["🔴","🔵","🟢","🟡"][n];b.onclick=async()=>{if(n!==seq[i++]){toast("Sai chuỗi.");i=0;return}if(i===4){try{let r=await rpc("complete_task",{p_code:S.room.code,p_task_id:Math.floor(Math.random()*7)+1});S.me.task=r.task_count??S.me.task+1;$("taskFill").style.width=S.me.task/7*100+"%";toast("Task hoàn thành");await actRefresh()}catch(e){toast(e.message)}i=0}};$("taskBtns").appendChild(b)})}
-async function meeting(reason="Cuộc họp khẩn cấp"){try{let r=await rpc("start_meeting",{p_code:S.room.code,p_reason:reason});S.meeting={id:r.meeting_id,end:Date.now()+30000};$("meetingReason").textContent=reason;$("meetingModal").classList.add("show");renderVotes()}catch(e){toast(e.message)}}
-function renderVotes(){$("votes").innerHTML="";for(const p of S.players.values())if(p.alive){let d=document.createElement("div");d.className="vote";d.innerHTML=`<span>🦆 ${p.name}</span><button class="btn">VOTE</button>`;d.querySelector("button").onclick=()=>vote(p.id);$("votes").appendChild(d)}}
-async function vote(id){try{await rpc("server_vote",{p_code:S.room.code,p_meeting_id:S.meeting.id,p_target_id:id});$("meetingModal").classList.remove("show");await actRefresh()}catch(e){toast(e.message)}}
-async function report(){let p=[...S.players.values()].find(x=>x.dead_body&&dist(S.me,x)<80);if(!p)return toast("Không có thi thể gần.");meeting("Báo cáo thi thể")}
-function move(dt){if(!S.me?.alive)return;let x=0,y=0;if(S.keys.w||S.keys.ArrowUp)y--;if(S.keys.s||S.keys.ArrowDown)y++;if(S.keys.a||S.keys.ArrowLeft)x--;if(S.keys.d||S.keys.ArrowRight)x++;x+=S.joy.x;y+=S.joy.y;let l=Math.hypot(x,y);if(l>.1){x/=l;y/=l;S.me.x+=x*145*dt;S.me.y+=y*145*dt}}
-const Map={walls:[[0,0,1120,30],[0,640,1120,30],[0,0,30,670],[1090,0,30,670]],rooms:[["CENTRAL",280,220,300,210],["REACTOR",620,100,270,210],["SECURITY",620,360,220,170],["STORAGE",70,100,210,190],["WORKSHOP",70,350,210,190],["GARDEN",330,470,260,160]]};
-const canvas=$("canvas"),ctx=canvas.getContext("2d");function resize(){canvas.width=innerWidth*devicePixelRatio;canvas.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}addEventListener("resize",resize);resize();
-function render(){let w=innerWidth,h=innerHeight;ctx.clearRect(0,0,w,h);ctx.fillStyle="#071019";ctx.fillRect(0,0,w,h);let ox=(S.me?.x||450)-w/2,oy=(S.me?.y||350)-h/2;ctx.save();ctx.translate(-ox,-oy);ctx.fillStyle="#101a28";ctx.fillRect(0,0,1120,670);for(const r of Map.rooms){ctx.fillStyle="#111e2d";ctx.fillRect(r[1],r[2],r[3],r[4]);ctx.strokeStyle="#29415b";ctx.strokeRect(r[1],r[2],r[3],r[4]);ctx.fillStyle="#60738d";ctx.font="bold 12px Arial";ctx.fillText(r[0],r[1]+10,r[2]+18)}ctx.fillStyle="#25364b";for(const a of Map.walls)ctx.fillRect(...a);for(const p of S.players.values()){if(!p.alive)continue;ctx.fillStyle=p.id===S.id?"#65ddff":"#ffcf5d";ctx.beginPath();ctx.arc(p.x,p.y,18,0,7);ctx.fill();ctx.fillStyle="#fff";ctx.font="bold 11px Arial";ctx.textAlign="center";ctx.fillText(p.name,p.x,p.y-27)}ctx.restore()}
-function loop(t){let dt=Math.min((t-S.last)/1000,.05);S.last=t;if(S.phase==="playing"){move(dt);render();$("taskFill").style.width=((S.me?.task||0)/7*100)+"%"}requestAnimationFrame(loop)}requestAnimationFrame(loop);
-addEventListener("keydown",e=>{S.keys[e.key]=true;if(e.key==="e")task();if(e.key==="q")kill();if(e.key==="r")report();if(e.key==="m")meeting()});addEventListener("keyup",e=>S.keys[e.key]=false);
-let pid;function jm(e){let r=$("joy").getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,m=48,d=Math.hypot(dx,dy)||1;if(d>m){dx=dx/d*m;dy=dy/d*m}$("stick").style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;S.joy.x=dx/m;S.joy.y=dy/m}$("joy").onpointerdown=e=>{pid=e.pointerId;$("joy").setPointerCapture(pid);jm(e)};$("joy").onpointermove=e=>e.pointerId===pid&&jm(e);["pointerup","pointercancel"].forEach(x=>$("joy").addEventListener(x,()=>{S.joy.x=S.joy.y=0;$("stick").style.transform="translate(-50%,-50%)"}));
 
-/* V4.2 stable mode: anonymous auth + Supabase Realtime, no RPC dependency */
-async function auth(){
- if(!SB)throw Error("Supabase chưa tải");
- // Realtime Broadcast public channel không cần Anonymous Auth.
- // Dùng một ID cục bộ cho phiên này để tránh phụ thuộc Provider Anonymous.
- if(!S.id)S.id=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now());
+<script>
+
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const SUPABASE_CONFIG = {
+ url:"https://iegmxjyuuaglzpcqyyth.supabase.co",
+ key:"sb_publishable_nWaQYAQ5u88dWlc8pe3_Ig_wuRm0C2J"
+};
+
+const SB =
+ window.supabase?.createClient(
+  SUPABASE_CONFIG.url,
+  SUPABASE_CONFIG.key
+ );
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+const S = {
+
+ id:null,
+ name:"",
+ room:null,
+
+ host:false,
+
+ phase:"home",
+
+ round:1,
+
+ role:null,
+
+ players:new Map(),
+
+ channel:null,
+
+ online:false,
+
+ settings:{},
+
+ meeting:null,
+
+ keys:{},
+
+ joy:{x:0,y:0},
+
+ last:performance.now(),
+
+ lastMove:0,
+
+ connectedAt:0
+
+};
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+const $ = id => document.getElementById(id);
+
+function toast(text){
+
+ $("toast").textContent = text;
+
+ $("toast").classList.add("show");
+
+ clearTimeout(toast.timer);
+
+ toast.timer=setTimeout(()=>{
+  $("toast").classList.remove("show");
+ },2200);
+
 }
-function send(p){if(S.channel)S.channel.send({type:"broadcast",event:"msg",payload:{sender:S.id,...p}})}
-function pack(p){return{id:p.id,name:p.name,is_bot:!!p.is_bot,is_host:!!p.is_host,ready:!!p.ready,alive:p.alive!==false,ghost:!!p.ghost,x:p.x||450,y:p.y||350,task_count:p.task||0,kills:p.kills||0,last_kill:p.lastKill||0,color:p.color||"#55dfff",dead_body:!!p.deadBody}}
-function applyState(d){
- if(!d)return;
- if(d.room)S.room={...S.room,...d.room};
- if(d.settings)S.settings=d.settings;
- if(d.round)S.round=d.round;
- if(d.phase)S.phase=d.phase;
- if(Array.isArray(d.players))for(const q of d.players){const old=S.players.get(q.id)||{};S.players.set(q.id,{...old,...q,task:+q.task_count||q.task||0,deadBody:!!q.dead_body})}
- S.me=S.players.get(S.id)||S.me;S.host=S.room?.host===S.id;
-}
-function state(){return{room:S.room,settings:S.settings,round:S.round,phase:S.phase,players:[...S.players.values()].map(pack)}}
-function broadcastState(){send({type:"state",data:state()})}
-async function net(){
- try{await S.channel?.unsubscribe()}catch{}
- S.channel=SB.channel("td_room_"+S.room.code,{config:{broadcast:{self:true},presence:{key:S.id}}});
- S.channel.on("broadcast",{event:"msg"},({payload})=>onNet(payload));
- await new Promise((resolve,reject)=>{
-   S.channel.subscribe(st=>{S.online=st==="SUBSCRIBED";if(S.online)resolve();else if(st==="CHANNEL_ERROR"||st==="TIMED_OUT")reject(Error("Không kết nối được Realtime"))});
+
+function show(id){
+
+ document.querySelectorAll(".screen")
+ .forEach(x=>{
+  x.classList.toggle("active",x.id===id);
  });
- if(S.host)broadcastState();
+
 }
-function onNet(p){
- if(!p||p.sender===S.id)return;
- if((p.type==="hello"||p.type==="request_state")&&S.host){broadcastState();return}
- if(p.type==="state"){applyState(p.data);S.phase==="lobby"?renderLobby():S.phase==="playing"&&render();return}
- if(p.type==="move"&&S.players.has(p.id)){Object.assign(S.players.get(p.id),{x:p.x,y:p.y,dir:p.dir});return}
- if(p.type==="ready"&&S.players.has(p.id)){S.players.get(p.id).ready=p.ready;renderLobby();return}
- if(p.type==="start"){applyState(p.data);S.phase="playing";S.me.role=p.roles?.[S.id]||S.me.role;gameStart();return}
- if(p.type==="role"&&p.target===S.id){S.me.role=p.role;roleReveal();return}
- if(p.type==="kill"){let q=S.players.get(p.id);if(q){q.alive=false;q.ghost=true;q.deadBody=true;q.deadX=p.x;q.deadY=p.y}checkWin();return}
- if(p.type==="task"&&S.players.has(p.id)){S.players.get(p.id).task=p.task;checkWin();return}
- if(p.type==="meeting"){openMeeting(p.reason||"Cuộc họp");return}
- if(p.type==="vote"){applyVote(p.voter,p.target);return}
- if(p.type==="leave"){S.players.delete(p.id);renderLobby()}
- if(p.type==="result")result(p.title,p.desc)
+
+function safe(text){
+
+ return String(text||"")
+ .trim()
+ .replace(/[<>]/g,"")
+ .slice(0,16);
+
 }
+
+function makeId(){
+
+ if(crypto?.randomUUID)
+  return crypto.randomUUID();
+
+ return Math.random().toString(36).slice(2)+Date.now();
+
+}
+
+function makeCode(){
+
+ return Math.random()
+ .toString(36)
+ .slice(2,8)
+ .toUpperCase();
+
+}
+
+function distance(a,b){
+
+ return Math.hypot(
+  a.x-b.x,
+  a.y-b.y
+ );
+
+}
+
+
+/* =========================================================
+   AUTH / SUPABASE
+========================================================= */
+
+function init(){
+
+ if(!SB){
+
+  toast("Không tải được Supabase.");
+
+  return false;
+
+ }
+
+ if(!S.id)
+  S.id=makeId();
+
+ return true;
+
+}
+
+
+/* =========================================================
+   NETWORK
+========================================================= */
+
+async function connectChannel(){
+
+ if(!SB)
+  throw Error("Supabase chưa tải.");
+
+ if(!S.room?.code)
+  throw Error("Chưa có mã phòng.");
+
+ try{
+  if(S.channel)
+   await S.channel.unsubscribe();
+ }catch{}
+
+ const channelName =
+  "deceiver_v43_"+S.room.code;
+
+ S.channel =
+  SB.channel(
+   channelName,
+   {
+    config:{
+     broadcast:{
+      self:false
+     }
+    }
+   }
+  );
+
+ S.channel.on(
+  "broadcast",
+  {
+   event:"msg"
+  },
+  ({payload})=>{
+   receive(payload);
+  }
+ );
+
+ await new Promise((resolve,reject)=>{
+
+  let done=false;
+
+  S.channel.subscribe(status=>{
+
+   if(status==="SUBSCRIBED"){
+
+    done=true;
+
+    S.online=true;
+
+    setOnline(true);
+
+    resolve();
+
+   }
+
+   if(
+    !done &&
+    (
+     status==="CHANNEL_ERROR" ||
+     status==="TIMED_OUT"
+    )
+   ){
+
+    done=true;
+
+    reject(
+     Error("Supabase Realtime không kết nối được.")
+    );
+
+   }
+
+  });
+
+ });
+
+}
+
+function send(data){
+
+ if(!S.channel)
+  return;
+
+ S.channel.send({
+
+  type:"broadcast",
+
+  event:"msg",
+
+  payload:{
+   ...data,
+   sender:S.id
+  }
+
+ });
+
+}
+
+function setOnline(value){
+
+ $("onlineDot").classList.toggle("on",value);
+
+ $("onlineText").textContent =
+  value ? "Realtime ONLINE" : "Offline";
+
+}
+
+
+/* =========================================================
+   PUBLIC STATE
+========================================================= */
+
+function publicPlayer(p){
+
+ return {
+
+  id:p.id,
+
+  name:p.name,
+
+  is_bot:!!p.is_bot,
+
+  is_host:!!p.is_host,
+
+  ready:!!p.ready,
+
+  alive:p.alive!==false,
+
+  ghost:!!p.ghost,
+
+  x:Number(p.x)||450,
+
+  y:Number(p.y)||350,
+
+  task:Number(p.task)||0,
+
+  kills:Number(p.kills)||0,
+
+  deadBody:!!p.deadBody,
+
+  deadX:Number(p.deadX)||0,
+
+  deadY:Number(p.deadY)||0
+
+ };
+
+}
+
+function getPublicState(){
+
+ return {
+
+  room:{
+   code:S.room.code,
+   host:S.room.host,
+   status:S.room.status
+  },
+
+  settings:S.settings,
+
+  round:S.round,
+
+  phase:S.phase,
+
+  players:[
+
+   ...S.players.values()
+
+  ].map(publicPlayer)
+
+ };
+
+}
+
+function sendState(){
+
+ if(!S.host)
+  return;
+
+ send({
+
+  type:"state",
+
+  data:getPublicState()
+
+ });
+
+}
+
+
+/* =========================================================
+   CREATE ROOM
+========================================================= */
+
 async function createRoom(){
+
  try{
-  await auth();const name=safe($("nameCreate").value);if(!name)return toast("Nhập tên.");
-  const max=+$("maxP").value,k=+$("killers").value,b=+$("bots").value;if(b+1>max)return toast("Số bot vượt quá số người.");
-  S.name=name;S.room={code:code(),password:$("passCreate").value||"",host:S.id,status:"lobby"};S.host=true;
-  S.settings={maxPlayers:max,killers:k,bots:b,difficulty:$("difficulty").value,rounds:+$("rounds").value,hideDead:$("hideDead").value==="true"};
-  S.players.clear();S.me={id:S.id,name,is_bot:false,is_host:true,ready:true,alive:true,ghost:false,x:450,y:350,task:0,kills:0,lastKill:0,color:"#65ddff",role:null};S.players.set(S.id,S.me);
-  for(let i=0;i<b;i++){let q={id:crypto.randomUUID(),name:"BOT_"+(i+1),is_bot:true,is_host:false,ready:true,alive:true,ghost:false,x:400+Math.random()*100,y:320+Math.random()*60,task:0,kills:0,lastKill:0,color:"#ffd45d",role:null};S.players.set(q.id,q)}
-  await net();show("lobby");renderLobby();broadcastState();toast("Phòng "+S.room.code+" đã tạo");
- }catch(e){toast(e.message||"Không tạo được phòng")}
+
+  if(!init())
+   return;
+
+  const name=safe(
+   $("nameCreate").value
+  );
+
+  if(!name){
+
+   toast("Nhập tên người chơi.");
+
+   return;
+
+  }
+
+  const maxPlayers=
+   Number($("maxP").value);
+
+  const killers=
+   Number($("killers").value);
+
+  const bots=
+   Number($("bots").value);
+
+  if(bots+1>maxPlayers){
+
+   toast("Số bot vượt quá số người.");
+
+   return;
+
+  }
+
+  if(killers>=maxPlayers-bots){
+
+   toast("Số Kẻ Sát Nhân quá nhiều.");
+
+   return;
+
+  }
+
+  S.name=name;
+
+  S.room={
+
+   code:makeCode(),
+
+   host:S.id,
+
+   status:"lobby",
+
+   password:$("passCreate").value||""
+
+  };
+
+  S.host=true;
+
+  S.round=1;
+
+  S.phase="lobby";
+
+  S.settings={
+
+   maxPlayers,
+
+   killers,
+
+   bots,
+
+   difficulty:$("difficulty").value,
+
+   rounds:Number($("rounds").value),
+
+   hideDead:$("hideDead").value==="true"
+
+  };
+
+  S.players.clear();
+
+  S.me={
+
+   id:S.id,
+
+   name,
+
+   is_bot:false,
+
+   is_host:true,
+
+   ready:true,
+
+   alive:true,
+
+   ghost:false,
+
+   x:450,
+
+   y:350,
+
+   task:0,
+
+   kills:0,
+
+   deadBody:false,
+
+   deadX:0,
+
+   deadY:0
+
+  };
+
+  S.players.set(S.id,S.me);
+
+  for(let i=0;i<bots;i++){
+
+   const bot={
+
+    id:makeId(),
+
+    name:"BOT_"+(i+1),
+
+    is_bot:true,
+
+    is_host:false,
+
+    ready:true,
+
+    alive:true,
+
+    ghost:false,
+
+    x:400+Math.random()*120,
+
+    y:300+Math.random()*100,
+
+    task:0,
+
+    kills:0,
+
+    deadBody:false,
+
+    deadX:0,
+
+    deadY:0
+
+   };
+
+   S.players.set(bot.id,bot);
+
+  }
+
+  await connectChannel();
+
+  show("lobby");
+
+  renderLobby();
+
+  sendState();
+
+  toast("Đã tạo phòng "+S.room.code);
+
+ }catch(e){
+
+  console.error(e);
+
+  toast(
+   e?.message ||
+   "Không tạo được phòng."
+  );
+
+ }
+
 }
+
+
+/* =========================================================
+   JOIN ROOM
+========================================================= */
+
 async function joinRoom(){
+
  try{
-  await auth();const name=safe($("nameJoin").value),c=$("codeJoin").value.trim().toUpperCase();
-  if(!name||c.length!==6)return toast("Tên hoặc mã phòng không hợp lệ.");
-  S.name=name;S.room={code:c,host:null,password:$("passJoin").value||"",status:"lobby"};S.host=false;S.players.clear();
-  S.me={id:S.id,name,is_bot:false,is_host:false,ready:false,alive:true,ghost:false,x:450,y:350,task:0,kills:0,lastKill:0,color:"#65ddff",role:null};S.players.set(S.id,S.me);
-  await net();show("lobby");renderLobby();send({type:"request_state"});
-  setTimeout(()=>{if(!S.room?.host)toast("Không tìm thấy phòng hoặc host chưa phản hồi.")},2500);
- }catch(e){toast(e.message||"Không vào được phòng")}
+
+  if(!init())
+   return;
+
+  const name=safe(
+   $("nameJoin").value
+  );
+
+  const roomCode=
+   $("codeJoin").value
+   .trim()
+   .toUpperCase();
+
+  const password=
+   $("passJoin").value||"";
+
+  if(!name){
+
+   toast("Nhập tên.");
+
+   return;
+
+  }
+
+  if(!/^[A-Z0-9]{6}$/.test(roomCode)){
+
+   toast("Mã phòng phải có 6 ký tự.");
+
+   return;
+
+  }
+
+  S.name=name;
+
+  S.room={
+
+   code:roomCode,
+
+   host:null,
+
+   status:"unknown",
+
+   password:""
+
+  };
+
+  S.host=false;
+
+  S.phase="lobby";
+
+  S.players.clear();
+
+  S.me={
+
+   id:S.id,
+
+   name,
+
+   is_bot:false,
+
+   is_host:false,
+
+   ready:false,
+
+   alive:true,
+
+   ghost:false,
+
+   x:450,
+
+   y:350,
+
+   task:0,
+
+   kills:0,
+
+   deadBody:false,
+
+   deadX:0,
+
+   deadY:0
+
+  };
+
+  S.players.set(S.id,S.me);
+
+  await connectChannel();
+
+  show("lobby");
+
+  renderLobby();
+
+  send({
+
+   type:"hello",
+
+   player:publicPlayer(S.me),
+
+   password
+
+  });
+
+  setTimeout(()=>{
+
+   if(!S.room?.host){
+
+    toast(
+     "Không tìm thấy phòng hoặc Host chưa phản hồi."
+    );
+
+   }
+
+  },3000);
+
+ }catch(e){
+
+  console.error(e);
+
+  toast(
+   e?.message ||
+   "Không vào được phòng."
+  );
+
+ }
+
 }
-function ready(){S.me.ready=!S.me.ready;send({type:"ready",id:S.id,ready:S.me.ready});if(S.host)broadcastState();renderLobby()}
+
+
+/* =========================================================
+   NETWORK RECEIVE
+========================================================= */
+
+function receive(p){
+
+ if(!p || p.sender===S.id)
+  return;
+
+
+ /* HOST: người mới xin vào */
+
+ if(
+  p.type==="hello" &&
+  S.host
+ ){
+
+  if(S.phase!=="lobby"){
+
+   send({
+
+    type:"joinDenied",
+
+    target:p.sender,
+
+    reason:"Phòng đã bắt đầu."
+
+   });
+
+   return;
+
+  }
+
+  const current=
+   [...S.players.values()]
+   .filter(x=>!x.is_bot)
+   .length;
+
+  const total=
+   S.players.size;
+
+  if(total>=S.settings.maxPlayers){
+
+   send({
+
+    type:"joinDenied",
+
+    target:p.sender,
+
+    reason:"Phòng đã đầy."
+
+   });
+
+   return;
+
+  }
+
+  if(
+   S.room.password &&
+   p.password!==S.room.password
+  ){
+
+   send({
+
+    type:"joinDenied",
+
+    target:p.sender,
+
+    reason:"Sai mật khẩu."
+
+   });
+
+   return;
+
+  }
+
+  if(S.players.has(p.player.id))
+   return;
+
+  const newPlayer={
+
+   ...p.player,
+
+   is_host:false,
+
+   ready:false
+
+  };
+
+  S.players.set(
+   newPlayer.id,
+   newPlayer
+  );
+
+  send({
+
+   type:"joinAccepted",
+
+   target:newPlayer.id
+
+  });
+
+  sendState();
+
+  renderLobby();
+
+  return;
+
+ }
+
+
+ /* JOIN ACCEPTED */
+
+ if(
+  p.type==="joinAccepted" &&
+  p.target===S.id
+ ){
+
+  if(!S.room)
+   return;
+
+  toast("Đã vào phòng.");
+
+  return;
+
+ }
+
+
+ /* JOIN DENIED */
+
+ if(
+  p.type==="joinDenied" &&
+  p.target===S.id
+ ){
+
+  toast(
+   p.reason||
+   "Không thể vào phòng."
+  );
+
+  try{
+   awaitLeave(false);
+  }catch{}
+
+  return;
+
+ }
+
+
+ /* HOST STATE */
+
+ if(p.type==="state"){
+
+  applyPublicState(p.data);
+
+  if(S.phase==="lobby")
+   renderLobby();
+
+  if(S.phase==="playing")
+   render();
+
+  return;
+
+ }
+
+
+ /* READY */
+
+ if(p.type==="ready"){
+
+  const q=
+   S.players.get(p.id);
+
+  if(q){
+
+   q.ready=!!p.ready;
+
+   renderLobby();
+
+  }
+
+  if(S.host)
+   sendState();
+
+  return;
+
+ }
+
+
+ /* START */
+
+ if(
+  p.type==="start" &&
+  p.data
+ ){
+
+  applyPublicState(p.data);
+
+  S.phase="playing";
+
+  if(p.targetRoles?.[S.id])
+   S.role=p.targetRoles[S.id];
+
+  show("game");
+
+  revealRole();
+
+  return;
+
+ }
+
+
+ /* ROLE */
+
+ if(
+  p.type==="role" &&
+  p.target===S.id
+ ){
+
+  S.role=p.role;
+
+  revealRole();
+
+  return;
+
+ }
+
+
+ /* MOVE */
+
+ if(p.type==="move"){
+
+  const q=
+   S.players.get(p.id);
+
+  if(q){
+
+   q.x=p.x;
+
+   q.y=p.y;
+
+  }
+
+  return;
+
+ }
+
+
+ /* KILL */
+
+ if(p.type==="kill"){
+
+  const q=
+   S.players.get(p.target);
+
+  if(q){
+
+   q.alive=false;
+
+   q.ghost=true;
+
+   q.deadBody=true;
+
+   q.deadX=p.x;
+
+   q.deadY=p.y;
+
+  }
+
+  if(p.killer===S.id){
+
+   S.me.kills++;
+
+  }
+
+  checkWin();
+
+  return;
+
+ }
+
+
+ /* TASK */
+
+ if(p.type==="task"){
+
+  const q=
+   S.players.get(p.id);
+
+  if(q)
+   q.task=p.task;
+
+  updateTaskBar();
+
+  checkWin();
+
+  return;
+
+ }
+
+
+ /* MEETING */
+
+ if(p.type==="meeting"){
+
+  openMeeting(
+   p.reason||"Cuộc họp"
+  );
+
+  return;
+
+ }
+
+
+ /* VOTE */
+
+ if(p.type==="vote"){
+
+  if(!S.meeting)
+   openMeeting("Cuộc họp");
+
+  S.meeting.votes.set(
+   p.voter,
+   p.target
+  );
+
+  if(S.host)
+   checkVotes();
+
+  return;
+
+ }
+
+
+ /* RESULT */
+
+ if(p.type==="result"){
+
+  showResult(
+   p.title,
+   p.desc
+  );
+
+  return;
+
+ }
+
+
+ /* LEAVE */
+
+ if(p.type==="leave"){
+
+  S.players.delete(p.id);
+
+  if(S.host)
+   sendState();
+
+  renderLobby();
+
+  }
+
+}
+
+
+/* =========================================================
+   APPLY STATE
+========================================================= */
+
+function applyPublicState(data){
+
+ if(!data)
+  return;
+
+ if(data.room){
+
+  S.room={
+   ...S.room,
+   ...data.room
+  };
+
+ }
+
+ if(data.settings)
+  S.settings=data.settings;
+
+ if(data.round)
+  S.round=data.round;
+
+ if(data.phase)
+  S.phase=data.phase;
+
+ if(Array.isArray(data.players)){
+
+  const old=
+   new Map(S.players);
+
+  S.players.clear();
+
+  for(const p of data.players){
+
+   const previous=
+    old.get(p.id)||{};
+
+   S.players.set(
+    p.id,
+    {
+     ...previous,
+     ...p
+    }
+   );
+
+  }
+
+ }
+
+ const me=
+  S.players.get(S.id);
+
+ if(me){
+
+  S.me=me;
+
+  S.me.role=S.role;
+
+ }
+
+ S.host=
+  S.room?.host===S.id;
+
+}
+
+
+/* =========================================================
+   LOBBY
+========================================================= */
+
+function renderLobby(){
+
+ $("roomCode").textContent=
+  S.room?.code||"------";
+
+ $("players").innerHTML="";
+
+ for(const p of S.players.values()){
+
+  const row=
+   document.createElement("div");
+
+  row.className="prow";
+
+  const readyClass=
+   p.ready?"badge ready":"badge";
+
+  row.innerHTML=`
+
+   <div class="avatar">
+    ${p.is_bot?"🤖":"🦆"}
+   </div>
+
+   <div class="grow">
+
+    <b>${escapeHTML(p.name)}</b>
+
+    <div class="small">
+     ${p.is_bot?"BOT":"PLAYER"}
+     ${p.is_host?" • HOST":""}
+    </div>
+
+   </div>
+
+   <span class="${readyClass}">
+    ${p.ready?"READY":"WAIT"}
+   </span>
+
+  `;
+
+  $("players").appendChild(row);
+
+ }
+
+ const x=S.settings||{};
+
+ $("settings").innerHTML=`
+
+ <div class="info">
+  Người chơi tối đa:
+  <b>${x.maxPlayers??"?"}</b>
+ </div>
+
+ <div class="info">
+  Kẻ Sát Nhân:
+  <b>${x.killers??"?"}</b>
+ </div>
+
+ <div class="info">
+  Bot:
+  <b>${x.bots??"?"}</b>
+ </div>
+
+ <div class="info">
+  Độ khó:
+  <b>${escapeHTML(x.difficulty||"?")}</b>
+ </div>
+
+ <div class="info">
+  Rounds:
+  <b>${x.rounds??"?"}</b>
+ </div>
+
+ `;
+
+ $("start").classList.toggle(
+  "hidden",
+  !S.host
+ );
+
+ $("ready").textContent=
+  S.me?.ready
+  ?"BỎ SẴN SÀNG"
+  :"SẴN SÀNG";
+
+}
+
+
+/* =========================================================
+   READY
+========================================================= */
+
+function toggleReady(){
+
+ if(!S.me)
+  return;
+
+ S.me.ready=!S.me.ready;
+
+ send({
+
+  type:"ready",
+
+  id:S.id,
+
+  ready:S.me.ready
+
+ });
+
+ renderLobby();
+
+ if(S.host)
+  sendState();
+
+}
+
+
+/* =========================================================
+   START GAME
+========================================================= */
+
+function startGame(){
+
+ if(!S.host){
+
+  toast("Chỉ Host mới bắt đầu.");
+
+  return;
+
+ }
+
+ if(S.players.size<3){
+
+  toast("Cần ít nhất 3 người.");
+
+  return;
+
+ }
+
+ const notReady=
+  [...S.players.values()]
+  .filter(p=>!p.is_bot && !p.ready);
+
+ if(notReady.length){
+
+  toast("Có người chưa sẵn sàng.");
+
+  return;
+
+ }
+
+ assignRoles();
+
+ S.round=1;
+
+ S.phase="playing";
+
+ for(const p of S.players.values()){
+
+  p.alive=true;
+
+  p.ghost=false;
+
+  p.deadBody=false;
+
+  p.task=0;
+
+  p.kills=0;
+
+  p.x=400+Math.random()*180;
+
+  p.y=280+Math.random()*150;
+
+ }
+
+ const publicData=
+  getPublicState();
+
+ const roles={};
+
+ for(const p of S.players.values())
+  roles[p.id]=p.role;
+
+ /* Không đưa roles vào public state */
+
+ send({
+
+  type:"start",
+
+  data:publicData,
+
+  targetRoles:roles
+
+ });
+
+ /* Host tự đặt role */
+
+ S.role=
+  roles[S.id];
+
+ S.me.role=S.role;
+
+ show("game");
+
+ revealRole();
+
+}
+
+
+/* =========================================================
+   ROLE ASSIGN
+========================================================= */
+
 function assignRoles(){
- let a=[...S.players.values()].sort(()=>Math.random()-.5);a.forEach(p=>p.role="CREW");
- const n=Math.min(S.settings.killers||1,Math.max(1,Math.floor(a.length/3)));for(let i=0;i<n;i++)a[i].role="KILLER";
+
+ const all=
+  [...S.players.values()];
+
+ all.forEach(
+  p=>p.role="CREW"
+ );
+
+ const shuffled=
+  [...all]
+  .sort(()=>Math.random()-.5);
+
+ const maxKillers=
+  Math.min(
+   Number(S.settings.killers)||1,
+   Math.max(
+    1,
+    Math.floor(all.length/4)
+   )
+  );
+
+ for(
+  let i=0;
+  i<maxKillers;
+  i++
+ ){
+
+  shuffled[i].role="KILLER";
+
+ }
+
 }
-function start(){
- if(!S.host)return toast("Chỉ Host mới bắt đầu.");
- if(S.players.size<3)return toast("Cần ít nhất 3 người.");
- if([...S.players.values()].some(p=>!p.is_bot&&!p.ready))return toast("Có người chưa sẵn sàng.");
- assignRoles();S.round=1;S.phase="playing";
- for(const p of S.players.values()){p.alive=true;p.ghost=false;p.deadBody=false;p.task=0;p.kills=0;p.lastKill=0;p.x=420+Math.random()*80;p.y=320+Math.random()*60}
- const roles={};for(const p of S.players.values())roles[p.id]=p.role;
- broadcastState();send({type:"start",data:state(),roles});gameStart();
+
+
+/* =========================================================
+   ROLE MODAL
+========================================================= */
+
+function revealRole(){
+
+ const killer=
+  S.role==="KILLER";
+
+ $("roleIcon").textContent=
+  killer?"🔪":"🦆";
+
+ $("roleName").textContent=
+  killer
+   ?"KẺ SÁT NHÂN"
+   :"NGƯỜI THƯỜNG";
+
+ $("roleName").className=
+  "rolename "+
+  (killer?"bad":"good");
+
+ $("roleDesc").textContent=
+  killer
+   ?"Loại người chơi khác mà không để lộ thân phận."
+   :"Hoàn thành nhiệm vụ và tìm Kẻ Sát Nhân.";
+
+ $("roleHud").textContent=
+  killer
+   ?"🔪 KẺ SÁT NHÂN"
+   :"🦆 NGƯỜI THƯỜNG";
+
+ $("roleHud").style.color=
+  killer
+   ?"var(--red)"
+   :"var(--green)";
+
+ $("roundHud").textContent=
+  "ROUND "+S.round;
+
+ updateTaskBar();
+
+ $("roleModal").classList.add("show");
+
 }
-async function kill(){
- if(S.me.role!=="KILLER")return toast("Bạn không phải Kẻ Sát Nhân.");
- if(Date.now()-S.me.lastKill<18000)return toast("Kill đang hồi.");
- let p=[...S.players.values()].filter(x=>x.id!==S.id&&x.alive).sort((a,b)=>dist(S.me,a)-dist(S.me,b))[0];
- if(!p||dist(S.me,p)>75)return toast("Không có mục tiêu trong tầm.");
- p.alive=false;p.ghost=true;p.deadBody=true;p.deadX=p.x;p.deadY=p.y;S.me.lastKill=Date.now();S.me.kills++;
- send({type:"kill",id:p.id,x:p.x,y:p.y});if(S.host)broadcastState();checkWin();
+
+
+/* =========================================================
+   MOVEMENT
+========================================================= */
+
+function move(dt){
+
+ if(!S.me?.alive)
+  return;
+
+ let x=0;
+ let y=0;
+
+ if(
+  S.keys.w ||
+  S.keys.ArrowUp
+ ) y--;
+
+ if(
+  S.keys.s ||
+  S.keys.ArrowDown
+ ) y++;
+
+ if(
+  S.keys.a ||
+  S.keys.ArrowLeft
+ ) x--;
+
+ if(
+  S.keys.d ||
+  S.keys.ArrowRight
+ ) x++;
+
+ x+=S.joy.x;
+ y+=S.joy.y;
+
+ const len=
+  Math.hypot(x,y);
+
+ if(len>.1){
+
+  x/=len;
+  y/=len;
+
+  S.me.x+=x*145*dt;
+  S.me.y+=y*145*dt;
+
+  S.me.x=
+   Math.max(
+    45,
+    Math.min(
+     1075,
+     S.me.x
+    )
+   );
+
+  S.me.y=
+   Math.max(
+    45,
+    Math.min(
+     625,
+     S.me.y
+    )
+   );
+
+  const now=Date.now();
+
+  if(now-S.lastMove>80){
+
+   S.lastMove=now;
+
+   send({
+
+    type:"move",
+
+    id:S.id,
+
+    x:S.me.x,
+
+    y:S.me.y
+
+   });
+
+  }
+
+ }
+
 }
-function task(){
- if(!S.me?.alive||S.me.role==="KILLER")return;
- let seq=[0,1,2,3].sort(()=>Math.random()-.5),i=0;$("taskBtns").innerHTML="";$("taskModal").classList.add("show");
- [0,1,2,3].forEach(n=>{let b=document.createElement("button");b.className="btn";b.textContent=["🔴","🔵","🟢","🟡"][n];b.onclick=()=>{if(n!==seq[i++]){toast("Sai chuỗi.");i=0;return}if(i===4){S.me.task=Math.min(7,S.me.task+1);send({type:"task",id:S.id,task:S.me.task});if(S.host)broadcastState();toast("Task hoàn thành");i=0;checkWin()}};$("taskBtns").appendChild(b)})
+
+
+/* =========================================================
+   MAP
+========================================================= */
+
+const MAP={
+
+ walls:[
+  [0,0,1120,30],
+  [0,640,1120,30],
+  [0,0,30,670],
+  [1090,0,30,670]
+ ],
+
+ rooms:[
+  ["CENTRAL",280,220,300,210],
+  ["REACTOR",620,100,270,210],
+  ["SECURITY",620,360,220,170],
+  ["STORAGE",70,100,210,190],
+  ["WORKSHOP",70,350,210,190],
+  ["GARDEN",330,470,260,160]
+ ]
+
+};
+
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+const canvas=$("canvas");
+
+const ctx=
+ canvas.getContext("2d");
+
+function resize(){
+
+ canvas.width=
+  innerWidth*devicePixelRatio;
+
+ canvas.height=
+  innerHeight*devicePixelRatio;
+
+ ctx.setTransform(
+  devicePixelRatio,
+  0,
+  0,
+  devicePixelRatio,
+  0,
+  0
+ );
+
 }
-function openMeeting(reason){S.phase="meeting";S.meeting={end:Date.now()+30000,votes:new Map()};$("meetingReason").textContent=reason;$("meetingModal").classList.add("show");renderVotes()}
-function meeting(reason="Cuộc họp khẩn cấp"){if(S.meeting)return toast("Đang họp.");openMeeting(reason);send({type:"meeting",reason})}
-function renderVotes(){$("votes").innerHTML="";for(const p of S.players.values())if(p.alive){let d=document.createElement("div");d.className="vote";d.innerHTML=`<span>🦆 ${safe(p.name)}</span><button class="btn">VOTE</button>`;d.querySelector("button").onclick=()=>vote(p.id);$("votes").appendChild(d)}}
-function vote(id){if(!S.meeting||S.meeting.votes.has(S.id))return toast("Bạn đã vote.");S.meeting.votes.set(S.id,id);send({type:"vote",voter:S.id,target:id});applyVote(S.id,id)}
-function applyVote(voter,target){if(!S.meeting)S.meeting={end:Date.now()+30000,votes:new Map()};S.meeting.votes.set(voter,target);if(S.meeting.votes.size>=[...S.players.values()].filter(p=>p.alive).length)resolveVotes()}
+
+addEventListener(
+ "resize",
+ resize
+);
+
+resize();
+
+
+function render(){
+
+ const w=innerWidth;
+ const h=innerHeight;
+
+ ctx.clearRect(
+  0,0,w,h
+ );
+
+ ctx.fillStyle="#071019";
+
+ ctx.fillRect(
+  0,0,w,h
+ );
+
+ const mx=
+  S.me?.x||450;
+
+ const my=
+  S.me?.y||350;
+
+ const ox=
+  mx-w/2;
+
+ const oy=
+  my-h/2;
+
+ ctx.save();
+
+ ctx.translate(
+  -ox,
+  -oy
+ );
+
+ /* background */
+
+ ctx.fillStyle="#101a28";
+
+ ctx.fillRect(
+  0,0,1120,670
+ );
+
+ /* rooms */
+
+ for(const r of MAP.rooms){
+
+  ctx.fillStyle="#111e2d";
+
+  ctx.fillRect(
+   r[1],
+   r[2],
+   r[3],
+   r[4]
+  );
+
+  ctx.strokeStyle="#29415b";
+
+  ctx.strokeRect(
+   r[1],
+   r[2],
+   r[3],
+   r[4]
+  );
+
+  ctx.fillStyle="#60738d";
+
+  ctx.font=
+   "bold 12px Arial";
+
+  ctx.textAlign="left";
+
+  ctx.fillText(
+   r[0],
+   r[1]+10,
+   r[2]+18
+  );
+
+ }
+
+ /* walls */
+
+ ctx.fillStyle="#25364b";
+
+ for(const a of MAP.walls)
+  ctx.fillRect(...a);
+
+
+ /* dead bodies */
+
+ for(const p of S.players.values()){
+
+  if(
+   !p.deadBody ||
+   p.alive
+  ) continue;
+
+  if(
+   S.settings.hideDead &&
+   !S.host &&
+   p.id!==S.id
+  ){
+
+   /* vẫn cho thấy dấu nhỏ */
+
+  }
+
+  ctx.fillStyle="#ff5f7e";
+
+  ctx.beginPath();
+
+  ctx.arc(
+   p.deadX||p.x,
+   p.deadY||p.y,
+   9,
+   0,
+   Math.PI*2
+  );
+
+  ctx.fill();
+
+ }
+
+
+ /* players */
+
+ for(const p of S.players.values()){
+
+  if(!p.alive)
+   continue;
+
+  ctx.fillStyle=
+   p.id===S.id
+    ?"#65ddff"
+    :"#ffd45d";
+
+  ctx.beginPath();
+
+  ctx.arc(
+   p.x,
+   p.y,
+   18,
+   0,
+   Math.PI*2
+  );
+
+  ctx.fill();
+
+  ctx.fillStyle="#fff";
+
+  ctx.font=
+   "bold 11px Arial";
+
+  ctx.textAlign="center";
+
+  ctx.fillText(
+   p.name,
+   p.x,
+   p.y-27
+  );
+
+ }
+
+ ctx.restore();
+
+}
+
+
+/* =========================================================
+   TASK
+========================================================= */
+
+function openTask(){
+
+ if(!S.me?.alive)
+  return;
+
+ if(S.role==="KILLER"){
+
+  toast("Kẻ Sát Nhân không làm task.");
+
+  return;
+
+ }
+
+ let sequence=
+  [0,1,2,3]
+  .sort(()=>Math.random()-.5);
+
+ let index=0;
+
+ $("taskBtns").innerHTML="";
+
+ $("taskModal")
+  .classList.add("show");
+
+ [0,1,2,3].forEach(n=>{
+
+  const b=
+   document.createElement("button");
+
+  b.className="btn";
+
+  b.textContent=
+   ["🔴","🔵","🟢","🟡"][n];
+
+  b.onclick=()=>{
+
+   if(n!==sequence[index]){
+
+    toast("Sai chuỗi!");
+
+    index=0;
+
+    return;
+
+   }
+
+   index++;
+
+   if(index===4){
+
+    S.me.task=
+     Math.min(
+      7,
+      (S.me.task||0)+1
+     );
+
+    send({
+
+     type:"task",
+
+     id:S.id,
+
+     task:S.me.task
+
+    });
+
+    if(S.host)
+     sendState();
+
+    updateTaskBar();
+
+    toast("TASK hoàn thành!");
+
+    index=0;
+
+    checkWin();
+
+   }
+
+  };
+
+  $("taskBtns")
+   .appendChild(b);
+
+ });
+
+}
+
+function updateTaskBar(){
+
+ const value=
+  Math.min(
+   100,
+   ((S.me?.task||0)/7)*100
+  );
+
+ $("taskFill").style.width=
+  value+"%";
+
+}
+
+
+/* =========================================================
+   KILL
+========================================================= */
+
+function kill(){
+
+ if(S.role!=="KILLER"){
+
+  toast("Bạn không phải Kẻ Sát Nhân.");
+
+  return;
+
+ }
+
+ if(!S.me.alive)
+  return;
+
+ if(
+  S.me.lastKill &&
+  Date.now()-S.me.lastKill<18000
+ ){
+
+  const left=
+   Math.ceil(
+    (18000-
+     (Date.now()-S.me.lastKill))/1000
+   );
+
+  toast(
+   "Kill hồi sau "+left+"s"
+  );
+
+  return;
+
+ }
+
+ const targets=
+  [...S.players.values()]
+  .filter(p=>
+   p.id!==S.id &&
+   p.alive
+  )
+  .sort(
+   (a,b)=>
+    distance(S.me,a)-
+    distance(S.me,b)
+  );
+
+ const target=targets[0];
+
+ if(
+  !target ||
+  distance(S.me,target)>75
+ ){
+
+  toast(
+   "Không có mục tiêu trong tầm."
+  );
+
+  return;
+
+ }
+
+ target.alive=false;
+ target.ghost=true;
+ target.deadBody=true;
+ target.deadX=target.x;
+ target.deadY=target.y;
+
+ S.me.lastKill=Date.now();
+ S.me.kills++;
+
+ send({
+
+  type:"kill",
+
+  target:target.id,
+
+  killer:S.id,
+
+  x:target.x,
+
+  y:target.y
+
+ });
+
+ if(S.host)
+  sendState();
+
+ checkWin();
+
+}
+
+
+/* =========================================================
+   MEETING
+========================================================= */
+
+function meeting(
+ reason="Cuộc họp khẩn cấp"
+){
+
+ if(!S.me?.alive)
+  return;
+
+ if(S.meeting){
+
+  toast("Đang có cuộc họp.");
+
+  return;
+
+ }
+
+ openMeeting(reason);
+
+ send({
+
+  type:"meeting",
+
+  reason
+
+ });
+
+}
+
+function openMeeting(reason){
+
+ S.phase="meeting";
+
+ S.meeting={
+
+  end:Date.now()+30000,
+
+  votes:new Map()
+
+ };
+
+ $("meetingReason")
+  .textContent=reason;
+
+ $("meetingModal")
+  .classList.add("show");
+
+ renderVotes();
+
+}
+
+function renderVotes(){
+
+ $("votes").innerHTML="";
+
+ for(const p of S.players.values()){
+
+  if(!p.alive)
+   continue;
+
+  const row=
+   document.createElement("div");
+
+  row.className="vote";
+
+  row.innerHTML=`
+
+   <span>
+    🦆 ${escapeHTML(p.name)}
+   </span>
+
+   <button class="btn">
+    VOTE
+   </button>
+
+  `;
+
+  row.querySelector("button")
+   .onclick=()=>vote(p.id);
+
+  $("votes").appendChild(row);
+
+ }
+
+}
+
+function vote(target){
+
+ if(!S.meeting)
+  return;
+
+ if(S.meeting.votes.has(S.id)){
+
+  toast("Bạn đã vote.");
+
+  return;
+
+ }
+
+ S.meeting.votes.set(
+  S.id,
+  target
+ );
+
+ send({
+
+  type:"vote",
+
+  voter:S.id,
+
+  target
+
+ });
+
+ if(S.host)
+  checkVotes();
+
+}
+
+function checkVotes(){
+
+ if(!S.meeting)
+  return;
+
+ const alive=
+  [...S.players.values()]
+  .filter(p=>p.alive);
+
+ if(
+  S.meeting.votes.size<
+  alive.length
+ )
+  return;
+
+ resolveVotes();
+
+}
+
 function resolveVotes(){
- let c={};for(const x of S.meeting.votes.values())c[x]=(c[x]||0)+1;let m=Math.max(...Object.values(c),0),top=Object.keys(c).filter(k=>c[k]===m);
- if(top.length===1&&top[0]!=="skip"){let p=S.players.get(top[0]);if(p){p.alive=false;p.ghost=true;p.deadBody=false}}
- $("meetingModal").classList.remove("show");S.meeting=null;S.phase="playing";if(S.host)broadcastState();checkWin()
+
+ if(!S.host)
+  return;
+
+ const count={};
+
+ for(
+  const target of
+  S.meeting.votes.values()
+ ){
+
+  count[target]=
+   (count[target]||0)+1;
+
+ }
+
+ let highest=0;
+
+ for(const n of Object.values(count))
+  highest=Math.max(highest,n);
+
+ const winners=
+  Object.keys(count)
+  .filter(
+   id=>count[id]===highest
+  );
+
+ let eliminated=null;
+
+ if(
+  winners.length===1 &&
+  winners[0]!=="skip"
+ ){
+
+  eliminated=
+   S.players.get(winners[0]);
+
+  if(eliminated){
+
+   eliminated.alive=false;
+   eliminated.ghost=true;
+
+  }
+
+ }
+
+ $("meetingModal")
+  .classList.remove("show");
+
+ S.meeting=null;
+
+ S.phase="playing";
+
+ sendState();
+
+ checkWin();
+
 }
-function report(){let p=[...S.players.values()].find(x=>x.deadBody&&dist(S.me,x)<80);if(!p)return toast("Không có thi thể gần.");meeting("Báo cáo thi thể")}
+
+
+/* =========================================================
+   REPORT
+========================================================= */
+
+function report(){
+
+ const body=
+  [...S.players.values()]
+  .find(
+   p=>
+    p.deadBody &&
+    distance(S.me,p)<80
+  );
+
+ if(!body){
+
+  toast(
+   "Không có thi thể gần."
+  );
+
+  return;
+
+ }
+
+ meeting("Báo cáo thi thể");
+
+}
+
+
+/* =========================================================
+   WIN
+========================================================= */
+
 function checkWin(){
- let k=[...S.players.values()].filter(p=>p.alive&&p.role==="KILLER"),c=[...S.players.values()].filter(p=>p.alive&&p.role!=="KILLER"),t=[...S.players.values()].filter(p=>p.role!=="KILLER").reduce((a,p)=>a+(p.task||0),0),max=Math.max(1,[...S.players.values()].filter(p=>p.role!=="KILLER").length*7);
- if(!k.length)return result("NGƯỜI THƯỜNG THẮNG","Tất cả Kẻ Sát Nhân đã bị loại.");
- if(t>=max)return result("NGƯỜI THƯỜNG THẮNG","Tất cả nhiệm vụ đã hoàn thành.");
- if(k.length>=c.length)return result("KẺ SÁT NHÂN THẮNG","Kẻ Sát Nhân đã chiếm ưu thế.");
+
+ const killers=
+  [...S.players.values()]
+  .filter(
+   p=>
+    p.alive &&
+    p.role==="KILLER"
+  );
+
+ const crew=
+  [...S.players.values()]
+  .filter(
+   p=>
+    p.alive &&
+    p.role!=="KILLER"
+  );
+
+ const allCrew=
+  [...S.players.values()]
+  .filter(
+   p=>p.role!=="KILLER"
+  );
+
+ const tasks=
+  allCrew.reduce(
+   (sum,p)=>
+    sum+(p.task||0),
+   0
+  );
+
+ const maxTasks=
+  Math.max(
+   1,
+   allCrew.length*7
+  );
+
+
+ if(killers.length===0){
+
+  finishGame(
+   "NGƯỜI THƯỜNG THẮNG",
+   "Tất cả Kẻ Sát Nhân đã bị loại."
+  );
+
+  return;
+
+ }
+
+ if(tasks>=maxTasks){
+
+  finishGame(
+   "NGƯỜI THƯỜNG THẮNG",
+   "Tất cả nhiệm vụ đã hoàn thành."
+  );
+
+  return;
+
+ }
+
+ if(
+  killers.length>=crew.length
+ ){
+
+  finishGame(
+   "KẺ SÁT NHÂN THẮNG",
+   "Kẻ Sát Nhân đã chiếm ưu thế."
+  );
+
+ }
+
 }
-function result(title,desc){$("resultTitle").textContent=title;$("resultDesc").textContent=desc;$("resultModal").classList.add("show");S.phase="result";if(S.host)send({type:"result",title,desc})}
-$("tc").onclick=()=>{$("tc").classList.add("active");$("tj").classList.remove("active");$("createBox").classList.remove("hidden");$("joinBox").classList.add("hidden")};$("tj").onclick=()=>{$("tj").classList.add("active");$("tc").classList.remove("active");$("joinBox").classList.remove("hidden");$("createBox").classList.add("hidden")};
-$("create").onclick=createRoom;$("join").onclick=joinRoom;$("ready").onclick=ready;$("start").onclick=start;$("leave").onclick=leave;$("roleOK").onclick=()=>$("roleModal").classList.remove("show");$("taskBtn").onclick=task;$("taskClose").onclick=()=>$("taskModal").classList.remove("show");$("killBtn").onclick=kill;$("reportBtn").onclick=report;$("meetingBtn").onclick=()=>meeting();$("skip").onclick=()=>vote("skip");$("backLobby").onclick=()=>{location.reload()};$("nextRound").onclick=()=>{if(!S.host)return toast("Chỉ Host.");location.reload()};
-setInterval(async()=>{if(S.phase==="meeting"&&S.meeting){let n=Math.max(0,Math.ceil((S.meeting.end-Date.now())/1000));$("meetingTimer").textContent=n;if(n===0){$("meetingModal").classList.remove("show");await actRefresh()}}},500);
-setInterval(()=>{if(S.phase==="lobby")sync()},2500);
-</script>
-</body></html>
+
+function finishGame(
+ title,
+ desc
+){
+
+ if(S.phase==="result")
+  return;
+
+ S.phase="result";
+
+ showResult(
+  title,
+  desc
+ );
+
+ if(S.host){
+
+  send({
+
+   type:"result",
+
+   title,
+
+   desc
+
+  });
+
+ }
+
+}
+
+function showResult(
+ title,
+ desc
+){
+
+ $("resultTitle")
+  .textContent=title;
+
+ $("resultDesc")
+  .textContent=desc;
+
+ $("resultModal")
+  .classList.add("show");
+
+}
+
+
+/* =========================================================
+   LEAVE
+========================================================= */
+
+async function awaitLeave(notify=true){
+
+ if(notify){
+
+  send({
+
+   type:"leave",
+
+   id:S.id
+
+  });
+
+ }
+
+ try{
+
+  if(S.channel)
+   await S.channel.unsubscribe();
+
+ }catch{}
+
+ S.channel=null;
+
+ S.online=false;
+
+ S.room=null;
+
+ S.host=false;
+
+ S.phase="home";
+
+ S.players.clear();
+
+ S.me=null;
+
+ S.role=null;
+
+ show("home");
+
+}
+
+async function leave(){
+
+ await awaitLeave(true);
+
+}
+
+
+/* =========================================================
+   KEYBOARD
+========================================================= */
+
+addEventListener(
+ "keydown",
+ e=>{
+
+  S.keys[e.key]=true;
+
+  if(
+   S.phase==="playing"
+  ){
+
+   if(e.key.toLowerCase()==="e")
+    openTask();
+
+   if(e.key.toLowerCase()==="q")
+    kill();
+
+   if(e.key.toLowerCase()==="r")
+    report();
+
+   if(e.key.toLowerCase()==="m")
+    meeting();
+
+  }
+
+ });
+
+addEventListener(
+ "keyup",
+ e=>{
+  S.keys[e.key]=false;
+ });
+
+
+/* =========================================================
+   JOYSTICK
+========================================================= */
+
+let joyPointer=null;
+
+function joystick(e){
+
+ const rect=
+  $("joy").getBoundingClientRect();
+
+ let dx=
+  e.clientX-
+  rect.left-
+  rect.width/2;
+
+ let dy=
+  e.clientY-
+  rect.top-
+  rect.height/2;
+
+ const max=48;
+
+ const d=
+  Math.hypot(dx,dy)||1;
+
+ if(d>max){
+
+  dx=dx/d*max;
+
+  dy=dy/d*max;
+
+ }
+
+ $("stick").style.transform=
+  `translate(
+   calc(-50% + ${dx}px),
+   calc(-50% + ${dy}px)
+  )`;
+
+ S.joy.x=dx/max;
+ S.joy.y=dy/max;
+
+}
+
+$("joy").addEventListener(
+ "pointerdown",
+ e=>{
+
+  joyPointer=e.pointerId;
+
+  $("joy")
+   .setPointerCapture(joyPointer);
+
+  joystick(e);
+
+ });
+
+$("joy").addEventListener(
+ "pointermove",
+ e=>{
+
+  if(
+   e.pointerId===
+   joyPointer
+  )
+   joystick(e);
+
+ });
+
+["pointerup","pointercancel"]
+.forEach(event=>{
+
+ $("joy").addEventListener(
+  event,
+  ()=>{
+
+   joyPointer=null;
+
+   S.joy.x=0;
+   S.joy.y=0;
+
+   $("stick").style.transform=
+    "translate(-50%,-50%)";
+
+  }
+ );
+
+});
+
+
+/* =========================================================
+   BOT AI
+========================================================= */
+
+let botTimer=0;
+
+function updateBots(){
+
+ if(!S.host)
+  return;
+
+ if(S.phase!=="playing")
+  return;
+
+ const bots=
+  [...S.players.values()]
+  .filter(
+   p=>p.is_bot&&p.alive
+  );
+
+ for(const bot of bots){
+
+  const dx=
+   Math.random()*2-1;
+
+  const dy=
+   Math.random()*2-1;
+
+  bot.x+=dx*3;
+  bot.y+=dy*3;
+
+  bot.x=
+   Math.max(
+    50,
+    Math.min(1070,bot.x)
+   );
+
+  bot.y=
+   Math.max(
+    50,
+    Math.min(620,bot.y)
+   );
+
+ }
+
+ sendState();
+
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHTML(text){
+
+ return String(text)
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
