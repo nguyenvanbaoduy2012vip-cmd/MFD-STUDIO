@@ -76,16 +76,6 @@ class CollisionSystem{
 
 class NetworkManager{
  static isHost(){return !!GameState.me&&GameState.hostId===GameState.me.id}
- static waitForSubscribed(channel,timeout=12000){
-  if(GameState.network.subscribed)return Promise.resolve();
-  return new Promise((resolve,reject)=>{
-   let done=false;
-   const finish=(err)=>{if(done)return;done=true;clearTimeout(timer);err?reject(err):resolve()};
-   const timer=setTimeout(()=>finish(new Error("Supabase Realtime subscribe timeout")),timeout);
-   const old=GameState.network._subResolve;
-   GameState.network._subResolve=()=>{if(old)old();finish()};
-  });
- }
  static async connect(code){
   if(!code)throw new Error("ROOM CODE missing");
   if(GameState.channel){try{await sb.removeChannel(GameState.channel)}catch(e){}GameState.channel=null}
@@ -99,6 +89,11 @@ class NetworkManager{
   channel.on("broadcast",{event:"leave"},({payload})=>NetworkManager.onLeave(payload));
   channel.on("broadcast",{event:"move"},({payload})=>NetworkManager.onMove(payload));
   channel.on("broadcast",{event:"report"},({payload})=>NetworkManager.onReport(payload));
+  channel.on("broadcast",{event:"kill"},({payload})=>NetworkManager.onKillRequest(payload));
+  channel.on("broadcast",{event:"task"},({payload})=>NetworkManager.onTaskRequest(payload));
+  channel.on("broadcast",{event:"meeting_open"},({payload})=>NetworkManager.onMeetingRequest(payload));
+  channel.on("broadcast",{event:"vote"},({payload})=>NetworkManager.onVoteRequest(payload));
+  channel.on("broadcast",{event:"statement"},({payload})=>NetworkManager.onStatementRequest(payload));
   channel.on("presence",{event:"sync"},()=>{GameState.connected=true;setNet("CONNECTED");});
   channel.on("presence",{event:"join"},()=>{});
   channel.on("presence",{event:"leave"},()=>{});
@@ -150,6 +145,41 @@ class NetworkManager{
  static onReport(payload){
   if(this.isHost()&&payload?.id&&GameState.alive[payload.id])MeetingSystem.open("BODY REPORTED");
  }
+ static onKillRequest(payload){
+  if(!this.isHost()||!payload?.actor||!payload?.target)return;
+  hostKill(payload.actor,payload.target);
+ }
+ static onTaskRequest(payload){
+  if(!this.isHost()||!payload?.id)return;
+  const p=GameState.players[payload.id];
+  if(!p||!GameState.alive[payload.id]||GameState.roles[payload.id]==="killer")return;
+  let best=null,bd=999;
+  for(const t of Object.values(GameState.tasks)){
+   const d=Math.hypot(p.x-t.x,p.y-t.y);
+   if(d<bd){bd=d;best=t}
+  }
+  if(!best||bd>75||best.done)return;
+  best.progress=clamp(best.progress+25,0,100);
+  best.owner=p.id;
+  if(best.progress>=100)best.done=true;
+  checkWin();
+  this.broadcastState();
+ }
+ static onMeetingRequest(payload){
+  if(this.isHost()&&payload?.id&&GameState.alive[payload.id])MeetingSystem.open("EMERGENCY");
+ }
+ static onVoteRequest(payload){
+  if(!this.isHost()||!GameState.meeting||!payload?.id||!GameState.alive[payload.id])return;
+  GameState.meeting.votes[payload.id]=payload.vote||"skip";
+  this.broadcastState();
+ }
+ static onStatementRequest(payload){
+  if(!this.isHost()||!GameState.meeting||!payload?.id||!GameState.alive[payload.id])return;
+  const text=String(payload.text||"").slice(0,240);
+  if(!text)return;
+  GameState.meeting.statements[payload.id]=text;
+  this.broadcastState();
+ }
  static apply(s){
   if(!s?.room)return;
   if(GameState.room&&s.room!==GameState.room)return;
@@ -162,25 +192,18 @@ class NetworkManager{
   if(GameState.phase==="lobby"){show("lobby");renderLobby()}
   else if(GameState.phase==="game"){show("game");renderHUD()}
   else if(GameState.phase==="meeting"){show("game");renderHUD();openMeeting()}
+  if(GameState.screen==="lobby")renderLobby();
  }
  static async initializeHostRoom(cfg){
-  // Host state exists locally BEFORE networking. UI can enter Lobby immediately;
-  // the authoritative broadcast is still blocked until the channel is SUBSCRIBED.
   GameState.room=cfg.code;GameState.cfg=cfg;GameState.phase="lobby";GameState.hostId=GameState.me.id;
   GameState.players={[GameState.me.id]:GameState.me};
   GameState.alive={[GameState.me.id]:true};
   GameState.bots={};
   for(let i=0;i<cfg.bots;i++)PlayerSystem.addBot(i);
   show("lobby");renderLobby();
-  try{
-    await this.connect(cfg.code);
-    // NEVER broadcast before SUBSCRIBED.
-    this.broadcastState();
-    setNet("CONNECTED • HOST");
-  }catch(err){
-    setNet("RECONNECTING...");
-    throw err;
-  }
+  await this.connect(cfg.code);
+  this.broadcastState();
+  setNet("CONNECTED • HOST");
  }
  static async requestJoin(){
   if(!GameState.network.subscribed)throw new Error("Realtime chưa SUBSCRIBED");
@@ -209,7 +232,12 @@ class TaskSystem{
  static interact(){const p=GameState.me;if(!p||GameState.roles[p.id]==="killer")return toast("Kẻ sát nhân không làm task thật.");
   let best=null,bd=999;for(const t of Object.values(GameState.tasks)){const d=Math.hypot(p.x-t.x,p.y-t.y);if(d<bd){bd=d;best=t}}
   if(!best||bd>75)return toast("Đến gần trạm task hơn.");if(best.done)return toast("Task này đã xong.");
-  best.progress=clamp(best.progress+25,0,100);best.owner=p.id;if(best.progress>=100)best.done=true;syncHost();toast(best.done?"TASK HOÀN THÀNH":"Đang sửa...")}
+  if(NetworkManager.isHost()){
+   best.progress=clamp(best.progress+25,0,100);best.owner=p.id;if(best.progress>=100)best.done=true;checkWin();NetworkManager.hostRefresh();
+  }else{
+   NetworkManager.send("task",{id:p.id});
+  }
+  toast(best.done?"TASK HOÀN THÀNH":"Đang sửa...")}
  static percent(){const a=Object.values(GameState.tasks);return a.length?Math.round(a.filter(x=>x.done).length/a.length*100):0}
 }
 class EvidenceSystem{
@@ -238,9 +266,16 @@ class BotAI{constructor(id){this.id=id;this.memory=new BotMemory();this.lastThin
 class MeetingSystem{
  static open(reason="REPORT"){if(GameState.phase!=="game")return;GameState.phase="meeting";GameState.meeting={reason,started:Date.now(),votes:{},statements:{}};
   syncHost();openMeeting()}
- static vote(id){if(!GameState.meeting||!GameState.alive[GameState.me.id])return;GameState.meeting.votes[GameState.me.id]=id||"skip";syncHost();toast("Đã ghi phiếu.")}
+ static vote(id){
+  if(!GameState.meeting||!GameState.alive[GameState.me.id])return;
+  const vote=id||"skip";
+  if(NetworkManager.isHost())GameState.meeting.votes[GameState.me.id]=vote;
+  else NetworkManager.send("vote",{id:GameState.me.id,vote});
+  if(NetworkManager.isHost())NetworkManager.hostRefresh();
+  toast("Đã ghi phiếu.");
+}
  static resolve(){if(!NetworkManager.isHost())return;const v=GameState.meeting.votes,tally={};Object.values(v).forEach(x=>tally[x]=(tally[x]||0)+1);
-  const top=Object.entries(tally).filter(([k])=>k!=="skip").sort((a,b)=>b[1]-a[1]);let out=null;if(top.length&&(!Object.values(tally).includes(top[0][1],1)||top.length===1))out=top[0][0];
+  const top=Object.entries(tally).filter(([k])=>k!=="skip").sort((a,b)=>b[1]-a[1]);let out=null;if(top.length&&(top.length===1||top[0][1]>top[1][1]))out=top[0][0];
   if(out&&GameState.alive[out]){GameState.alive[out]=false;GameState.bodies.push({id:out,x:GameState.players[out].x,y:GameState.players[out].y})}
   GameState.phase="game";GameState.meeting=null;checkWin();NetworkManager.hostRefresh()}}
 class VentSystem{static use(){if(GameState.roles[GameState.me.id]!=="killer")return toast("Chỉ sát nhân dùng được tunnel.");toast("VENT: prototype tunnel active.")}}
@@ -268,7 +303,14 @@ function renderHUD(){const role=GameState.roles[GameState.me.id];$("hudRole").te
 function openMeeting(){if(!GameState.meeting)return;const alive=Object.values(GameState.players).filter(p=>GameState.alive[p.id]);
  $("modal").innerHTML=`<h2>MEETING • ${esc(GameState.meeting.reason)}</h2><p class="small">Thảo luận và bỏ phiếu. Người chết không được vote.</p><div class="meetingList">${alive.map(p=>`<button class="vote" onclick="MeetingSystem.vote('${p.id}')">🦆 ${esc(p.name)}<br><span class="small">Nghi ngờ / Vote</span></button>`).join("")}<button class="vote" onclick="MeetingSystem.vote('skip')">⏭ SKIP</button></div><div class="actions"><button onclick="submitStatement()">GỬI LẬP LUẬN</button>${NetworkManager.isHost()?'<button class="primary" onclick="MeetingSystem.resolve()">KẾT THÚC VOTE</button>':''}</div><input id="statement" maxlength="240" placeholder="Bạn muốn nói gì?"><div class="log" id="stmtLog">${Object.entries(GameState.meeting.statements||{}).map(([id,s])=>`${esc(GameState.players[id]?.name||id)}: ${esc(s)}`).join("<br>")}</div>`;
  $("overlay").classList.remove("hidden")}
-function submitStatement(){const s=$("statement").value.trim();if(!s)return toast("Bạn chưa đưa ra lập luận. Những người khác có thể nghi ngờ bạn.");GameState.meeting.statements[GameState.me.id]=s;syncHost();openMeeting()}
+function submitStatement(){
+ const s=$("statement").value.trim();
+ if(!s)return toast("Bạn chưa đưa ra lập luận. Những người khác có thể nghi ngờ bạn.");
+ if(NetworkManager.isHost())GameState.meeting.statements[GameState.me.id]=s;
+ else NetworkManager.send("statement",{id:GameState.me.id,text:s});
+ if(NetworkManager.isHost())NetworkManager.hostRefresh();
+ openMeeting();
+}
 function showResult(title,text){openModal(`<h1>${title}</h1><p>${text}</p><div class="actions"><button class="primary" onclick="nextRound()">ROUND TIẾP</button><button onclick="leaveRoom()">VỀ MENU</button></div>`)}
 function nextRound(){if(!NetworkManager.isHost())return;GameState.round++;if(GameState.round>GameState.cfg.rounds){showResult("KẾT THÚC","Đã hoàn thành toàn bộ số round.");return}
  GameState.phase="game";GameState.bodies=[];TaskSystem.init();const ids=Object.keys(GameState.players);GameState.roles={};ids.sort(()=>Math.random()-.5).slice(0,GameState.cfg.killers).forEach(id=>GameState.roles[id]="killer");
@@ -373,8 +415,20 @@ $("createBtn").onclick=createRoom;$("joinBtn").onclick=joinRoom;$("startBtn").on
 $("copyBtn").onclick=()=>navigator.clipboard?.writeText(GameState.room).then(()=>toast("Đã copy mã phòng."));
 $("taskBtn").onclick=()=>{TaskSystem.interact();syncHost();renderHUD()};
 $("reportBtn").onclick=()=>{const near=GameState.bodies.find(b=>dist(b,GameState.me)<90);if(near){if(NetworkManager.isHost())MeetingSystem.open("BODY REPORTED");else NetworkManager.send("report",{id:GameState.me.id,body:near.id})}else toast("Không có body gần bạn.")};
-$("killBtn").onclick=()=>{const me=GameState.me,target=Object.values(GameState.players).filter(p=>p.id!==me.id&&GameState.alive[p.id]&&GameState.roles[p.id]!=="killer").sort((a,b)=>dist(me,a)-dist(me,b))[0];if(target)hostKill(me.id,target.id);else toast("Không có mục tiêu.")};
-$("ventBtn").onclick=()=>VentSystem.use();$("secBtn").onclick=()=>SecuritySystem.open();$("meetBtn").onclick=()=>MeetingSystem.open("EMERGENCY");
+$("killBtn").onclick=()=>{
+ const me=GameState.me,target=Object.values(GameState.players)
+  .filter(p=>p.id!==me.id&&GameState.alive[p.id]&&GameState.roles[p.id]!=="killer")
+  .sort((a,b)=>dist(me,a)-dist(me,b))[0];
+ if(!target)return toast("Không có mục tiêu.");
+ if(NetworkManager.isHost())hostKill(me.id,target.id);
+ else NetworkManager.send("kill",{actor:me.id,target:target.id});
+};
+$("ventBtn").onclick=()=>VentSystem.use();
+$("secBtn").onclick=()=>SecuritySystem.open();
+$("meetBtn").onclick=()=>{
+ if(NetworkManager.isHost())MeetingSystem.open("EMERGENCY");
+ else NetworkManager.send("meeting_open",{id:GameState.me.id});
+};
 </script>
 </body>
 </html>
