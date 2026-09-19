@@ -29,7 +29,7 @@ input,select,textarea{width:100%;background:#080f1b;color:#fff;border:1px solid 
 <div class="field"><label>Mật khẩu</label><input id="passCreate" type="password"></div>
 <div class="field"><label>Tối đa người chơi</label><select id="maxP"><option>3</option><option>4</option><option>5</option><option>6</option><option selected>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select></div>
 <div class="field"><label>Kẻ Sát Nhân</label><select id="killers"><option selected>1</option><option>2</option><option>3</option></select></div>
-<div class="field"><label>Bot</label><select id="bots"><option>0</option><option>1</option><option selected>3</option><option>5</option><option>8</option></select></div>
+<div class="field"><label>Bot</label><select id="bots"><option>0</option><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option></select></div>
 <div class="field"><label>Độ khó</label><select id="difficulty"><option>easy</option><option selected>normal</option><option>hardcore</option></select></div>
 <div class="field"><label>Số round</label><select id="rounds"><option>1</option><option selected>5</option><option>10</option></select></div>
 <div class="field"><label>Tên người chết</label><select id="hideDead"><option value="true" selected>Ẩn</option><option value="false">Hiện</option></select></div>
@@ -57,7 +57,10 @@ async function createRoom(){try{await auth();let name=safe($("nameCreate").value
 async function joinRoom(){try{await auth();let name=safe($("nameJoin").value),code=$("codeJoin").value.trim().toUpperCase();if(!name||code.length!==6)return toast("Tên hoặc mã phòng không hợp lệ.");let r=await rpc("join_room",{p_code:code,p_password:$("passJoin").value||null,p_name:name});await enter(r,name);toast("Đã vào phòng")}catch(e){toast(e.message||"Không vào được phòng")}}
 async function enter(r,name){S.name=name;S.room=r;S.phase="lobby";S.me={id:S.id,name,alive:true,role:null,x:450,y:350,task:0};await net();show("lobby");await sync();renderLobby()}
 async function net(){if(!SB||!S.room?.code)return;S.channel=SB.channel("td_room_"+S.room.code,{config:{broadcast:{self:true},presence:{key:S.id}}});S.channel.on("broadcast",{event:"refresh"},()=>sync()).subscribe(s=>S.online=s==="SUBSCRIBED")}
-async function sync(){if(!S.room)return;try{let r=await rpc("room_state",{p_code:S.room.code});if(r){S.room=r.room||S.room;S.settings=r.settings||S.settings;S.players.clear();for(const p of r.players||[])S.players.set(p.id,p);S.me=S.players.get(S.id)||S.me;renderLobby();if(S.phase==="playing")render()}}catch(e){}}
+async function sync(){
+ if(!S.room||!S.channel)return;
+ if(S.host)broadcastState(); else send({type:"request_state"});
+}
 async function actRefresh(){await S.channel?.send({type:"broadcast",event:"refresh",payload:{}});setTimeout(sync,150)}
 async function ready(){try{await rpc("set_ready",{p_code:S.room.code,p_ready:!S.me.ready});await actRefresh()}catch(e){toast(e.message)}}
 async function start(){try{let r=await rpc("start_game",{p_code:S.room.code});S.round=r.round||1;S.me.role=r.role||null;await sync();gameStart()}catch(e){toast(e.message||"Không bắt đầu được")}}
@@ -105,7 +108,11 @@ function broadcastState(){send({type:"state",data:state()})}
 async function net(){
  try{await S.channel?.unsubscribe()}catch{}
  S.channel=SB.channel("td_room_"+S.room.code,{config:{broadcast:{self:true},presence:{key:S.id}}});
- S.channel.on("broadcast",{event:"msg"},({payload})=>onNet(payload)).subscribe(st=>{S.online=st==="SUBSCRIBED";if(S.online)send({type:"hello"})});
+ S.channel.on("broadcast",{event:"msg"},({payload})=>onNet(payload));
+ await new Promise((resolve,reject)=>{
+   S.channel.subscribe(st=>{S.online=st==="SUBSCRIBED";if(S.online)resolve();else if(st==="CHANNEL_ERROR"||st==="TIMED_OUT")reject(Error("Không kết nối được Realtime"))});
+ });
+ if(S.host)broadcastState();
 }
 function onNet(p){
  if(!p||p.sender===S.id)return;
@@ -125,7 +132,7 @@ function onNet(p){
 async function createRoom(){
  try{
   await auth();const name=safe($("nameCreate").value);if(!name)return toast("Nhập tên.");
-  const max=+$("maxP").value,k=+$("killers").value,b=+$("bots").value;if(3+b>max)return toast("Số bot vượt quá số người.");
+  const max=+$("maxP").value,k=+$("killers").value,b=+$("bots").value;if(b+1>max)return toast("Số bot vượt quá số người.");
   S.name=name;S.room={code:code(),password:$("passCreate").value||"",host:S.id,status:"lobby"};S.host=true;
   S.settings={maxPlayers:max,killers:k,bots:b,difficulty:$("difficulty").value,rounds:+$("rounds").value,hideDead:$("hideDead").value==="true"};
   S.players.clear();S.me={id:S.id,name,is_bot:false,is_host:true,ready:true,alive:true,ghost:false,x:450,y:350,task:0,kills:0,lastKill:0,color:"#65ddff",role:null};S.players.set(S.id,S.me);
@@ -191,6 +198,6 @@ function result(title,desc){$("resultTitle").textContent=title;$("resultDesc").t
 $("tc").onclick=()=>{$("tc").classList.add("active");$("tj").classList.remove("active");$("createBox").classList.remove("hidden");$("joinBox").classList.add("hidden")};$("tj").onclick=()=>{$("tj").classList.add("active");$("tc").classList.remove("active");$("joinBox").classList.remove("hidden");$("createBox").classList.add("hidden")};
 $("create").onclick=createRoom;$("join").onclick=joinRoom;$("ready").onclick=ready;$("start").onclick=start;$("leave").onclick=leave;$("roleOK").onclick=()=>$("roleModal").classList.remove("show");$("taskBtn").onclick=task;$("taskClose").onclick=()=>$("taskModal").classList.remove("show");$("killBtn").onclick=kill;$("reportBtn").onclick=report;$("meetingBtn").onclick=()=>meeting();$("skip").onclick=()=>vote("skip");$("backLobby").onclick=()=>{location.reload()};$("nextRound").onclick=()=>{if(!S.host)return toast("Chỉ Host.");location.reload()};
 setInterval(async()=>{if(S.phase==="meeting"&&S.meeting){let n=Math.max(0,Math.ceil((S.meeting.end-Date.now())/1000));$("meetingTimer").textContent=n;if(n===0){$("meetingModal").classList.remove("show");await actRefresh()}}},500);
-setInterval(()=>{if(S.phase==="lobby"||S.phase==="playing")sync()},2500);
+setInterval(()=>{if(S.phase==="lobby")sync()},2500);
 </script>
 </body></html>
