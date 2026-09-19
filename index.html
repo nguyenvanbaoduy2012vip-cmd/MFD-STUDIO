@@ -86,11 +86,9 @@ let pid;function jm(e){let r=$("joy").getBoundingClientRect(),dx=e.clientX-r.lef
 /* V4.2 stable mode: anonymous auth + Supabase Realtime, no RPC dependency */
 async function auth(){
  if(!SB)throw Error("Supabase chưa tải");
- const {data}=await SB.auth.getSession();
- if(data.session){S.id=data.session.user.id;return}
- const r=await SB.auth.signInAnonymously();
- if(r.error)throw r.error;
- S.id=r.data.user.id;
+ // Realtime Broadcast public channel không cần Anonymous Auth.
+ // Dùng một ID cục bộ cho phiên này để tránh phụ thuộc Provider Anonymous.
+ if(!S.id)S.id=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now());
 }
 function send(p){if(S.channel)S.channel.send({type:"broadcast",event:"msg",payload:{sender:S.id,...p}})}
 function pack(p){return{id:p.id,name:p.name,is_bot:!!p.is_bot,is_host:!!p.is_host,ready:!!p.ready,alive:p.alive!==false,ghost:!!p.ghost,x:p.x||450,y:p.y||350,task_count:p.task||0,kills:p.kills||0,last_kill:p.lastKill||0,color:p.color||"#55dfff",dead_body:!!p.deadBody}}
