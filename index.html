@@ -280,17 +280,51 @@ function setNet(s){$("netStatus").textContent=s}
 
 async function createRoom(){
  const name=$("cName").value.trim(),max=+$("cMax").value,killers=+$("cKillers").value,bots=+$("cBots").value,code=($("cCode").value.trim()||code6()).toUpperCase();
- if(name.length<1||name.length>18)return toast("Tên không hợp lệ.");if(!/^[A-Z0-9]{4,6}$/.test(code))return toast("Mã phòng 4–6 ký tự A-Z/0-9.");
- if(killers>=max)return toast("Killer phải ít hơn max players.");if(bots+1>max)return toast("Bot vượt quá số người tối đa.");
+ if(name.length<1||name.length>18)return toast("Tên không hợp lệ.");
+ if(!/^[A-Z0-9]{4,6}$/.test(code))return toast("Mã phòng 4–6 ký tự A-Z/0-9.");
+ if(killers>=max)return toast("Killer phải ít hơn max players.");
+ if(bots+1>max)return toast("Bot vượt quá số người tối đa.");
+
  try{
-  $("createBtn").disabled=true;setNet("SUBSCRIBING...");
+  $("createBtn").disabled=true;
+
+  // Khởi tạo HOST hoàn toàn ở local trước.
   PlayerSystem.addReal(name);
+  GameState.room=code;
   GameState.cfg={code,max,killers,bots,diff:$("cDiff").value,rounds:+$("cRounds").value,dead:$("cDead").value==="1",role:$("cRole").value==="1"};
-  await NetworkManager.initializeHostRoom(GameState.cfg);
-  // initializeHostRoom enters Lobby immediately; state broadcast happens only after SUBSCRIBED.
-  renderLobby();toast("Phòng đã tạo: "+code);
- }catch(e){console.error(e);toast("Không thể tạo phòng: "+(e.message||e));GameState.network.subscribed=false}
- finally{$("createBtn").disabled=false}
+  GameState.phase="lobby";
+  GameState.hostId=GameState.me.id;
+  GameState.players={[GameState.me.id]:GameState.me};
+  GameState.alive={[GameState.me.id]:true};
+  GameState.bots={};
+
+  // Thêm bot trước để Lobby hiển thị đầy đủ ngay lập tức.
+  for(let i=0;i<bots;i++)PlayerSystem.addBot(i);
+
+  // QUAN TRỌNG: vào Lobby NGAY, không chờ Supabase.
+  show("lobby");
+  renderLobby();
+  setNet("CONNECTING...");
+  toast("Phòng đã tạo: "+code);
+
+  // Realtime chạy phía sau. Chỉ broadcast sau khi SUBSCRIBED.
+  try{
+    await NetworkManager.connect(code);
+    GameState.hostId=GameState.me.id;
+    NetworkManager.hostRefresh();
+    setNet("CONNECTED");
+    renderLobby();
+  }catch(netErr){
+    console.error("CREATE ROOM REALTIME ERROR:",netErr);
+    setNet("OFFLINE");
+    toast("Lobby đã tạo, nhưng Realtime chưa kết nối.");
+  }
+ }catch(e){
+  console.error("CREATE ROOM ERROR:",e);
+  toast("Không thể tạo phòng: "+(e.message||e));
+ }finally{
+  $("createBtn").disabled=false;
+ }
 }
 
 async function joinRoom(){
