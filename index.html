@@ -164,15 +164,23 @@ class NetworkManager{
   else if(GameState.phase==="meeting"){show("game");renderHUD();openMeeting()}
  }
  static async initializeHostRoom(cfg){
-  // Critical ordering: create local state, subscribe, then become authoritative host and broadcast.
-  GameState.room=cfg.code;GameState.cfg=cfg;GameState.phase="lobby";GameState.hostId=null;
-  await this.connect(cfg.code);
-  GameState.hostId=GameState.me.id;
+  // Host state exists locally BEFORE networking. UI can enter Lobby immediately;
+  // the authoritative broadcast is still blocked until the channel is SUBSCRIBED.
+  GameState.room=cfg.code;GameState.cfg=cfg;GameState.phase="lobby";GameState.hostId=GameState.me.id;
   GameState.players={[GameState.me.id]:GameState.me};
   GameState.alive={[GameState.me.id]:true};
   GameState.bots={};
   for(let i=0;i<cfg.bots;i++)PlayerSystem.addBot(i);
-  this.broadcastState();
+  show("lobby");renderLobby();
+  try{
+    await this.connect(cfg.code);
+    // NEVER broadcast before SUBSCRIBED.
+    this.broadcastState();
+    setNet("CONNECTED • HOST");
+  }catch(err){
+    setNet("RECONNECTING...");
+    throw err;
+  }
  }
  static async requestJoin(){
   if(!GameState.network.subscribed)throw new Error("Realtime chưa SUBSCRIBED");
@@ -279,8 +287,8 @@ async function createRoom(){
   PlayerSystem.addReal(name);
   GameState.cfg={code,max,killers,bots,diff:$("cDiff").value,rounds:+$("cRounds").value,dead:$("cDead").value==="1",role:$("cRole").value==="1"};
   await NetworkManager.initializeHostRoom(GameState.cfg);
-  // Only after SUBSCRIBED + host state initialization do we enter Lobby and broadcast.
-  show("lobby");renderLobby();NetworkManager.hostRefresh();toast("Phòng đã tạo: "+code);
+  // initializeHostRoom enters Lobby immediately; state broadcast happens only after SUBSCRIBED.
+  renderLobby();toast("Phòng đã tạo: "+code);
  }catch(e){console.error(e);toast("Không thể tạo phòng: "+(e.message||e));GameState.network.subscribed=false}
  finally{$("createBtn").disabled=false}
 }
