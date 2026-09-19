@@ -31,7 +31,7 @@ button,input,select{font:inherit}button{cursor:pointer;border:1px solid #33415d;
 <div id="joinForm" class="hidden"><label>Tên người chơi</label><input id="jName" maxlength="18" placeholder="Tên của bạn"><label>Mã phòng</label><input id="jCode" maxlength="6" placeholder="ABC123"><label>Mật khẩu</label><input id="jPass" type="password"><div class="actions"><button class="primary" id="joinBtn">VÀO PHÒNG</button></div></div>
 </div></div></section>
 
-<section id="lobby" class="screen hidden"><div class="lobby card"><div class="lobbyHead"><div><div class="small">ROOM</div><h2 id="roomTitle">------</h2><span id="netStatus" class="status">CONNECTED</span></div><div class="actions"><button id="copyBtn">COPY CODE</button><button id="leaveBtn">RỜI</button></div></div><div class="box"><div class="grid2"><div>Players: <b id="count">0/0</b></div><div>Host: <b id="hostName">—</b></div><div>Killers: <b id="lKill">—</b></div><div>AI: <b id="lDiff">—</b></div></div></div><div id="playerGrid" class="players"></div><div class="actions"><button class="primary" id="startBtn">START GAME</button></div><div class="small">Cần ít nhất 3 thực thể (người + bot). Host mới được start.</div></div></section>
+<section id="lobby" class="screen hidden"><div class="lobby card"><div class="lobbyHead"><div><div class="small">ROOM</div><h2 id="roomTitle">------</h2><span id="netStatus" class="status">CONNECTING...</span></div><div class="actions"><button id="copyBtn">COPY CODE</button><button id="leaveBtn">RỜI</button></div></div><div class="box"><div class="grid2"><div>Players: <b id="count">0/0</b></div><div>Host: <b id="hostName">—</b></div><div>Killers: <b id="lKill">—</b></div><div>AI: <b id="lDiff">—</b></div></div></div><div id="playerGrid" class="players"></div><div class="actions"><button class="primary" id="startBtn">START GAME</button></div><div class="small">Cần ít nhất 3 thực thể (người + bot). Host mới được start.</div></div></section>
 
 <section id="game" class="hidden"><div class="portrait" id="portrait"><div><h2>📱 XOAY ĐIỆN THOẠI NGANG</h2><p>THE DECEIVER cần màn hình ngang để điều khiển bản đồ.</p></div></div><div class="hud"><div class="pill"><b id="hudRole">ROLE</b><div class="small" id="hudRound">Round 1/1</div></div><div class="pill"><div>Tasks <b id="taskTxt">0%</b></div><div class="bar"><i id="taskBar"></i></div></div><div class="pill" id="aliveTxt">ALIVE</div></div><canvas id="cv"></canvas><div class="controls"><div class="dpad"><span></span><button data-key="up">▲</button><span></span><button data-key="left">◀</button><button data-key="down">▼</button><button data-key="right">▶</button></div><div class="gameBtns"><button id="taskBtn">TASK</button><button id="reportBtn">REPORT</button><button id="killBtn" class="danger">KILL</button><button id="ventBtn">VENT</button><button id="secBtn">SECURITY</button><button id="meetBtn">MEETING</button></div></div></section>
 
@@ -40,14 +40,6 @@ button,input,select{font:inherit}button{cursor:pointer;border:1px solid #33415d;
 </div>
 <script>
 "use strict";
-/* ============================================================
- THE DECEIVER V5
- NetworkManager = Supabase Realtime
- Important V5 security note:
- This single-file client is a playable realtime prototype.
- Production anti-cheat/secret roles MUST move to server-side
- RPC/Edge Functions. Never put a service-role key here.
- ============================================================ */
 const SUPABASE_CONFIG={url:"https://iegmxjyuuaglzpcqyyth.supabase.co",publishableKey:"sb_publishable_nWaQYAQ5u88dWlc8pe3_Ig_wuRm0C2J"};
 const sb=window.supabase.createClient(SUPABASE_CONFIG.url,SUPABASE_CONFIG.publishableKey);
 const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -58,311 +50,289 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)); const dist=(a,b)=>Math.hypot(a.x
 const GameState={
  screen:"home",room:null,me:null,channel:null,connected:false,hostId:null,players:{},
  cfg:null,phase:"lobby",round:1,roles:{},alive:{},tasks:{},bodies:[],meeting:null,
- local:{x:900,y:620,dir:"down",last:0},keys:{},cam:{x:0,y:0},logs:[],
- bots:{}
+ local:{x:900,y:620,dir:"down",last:0},keys:{},cam:{x:0,y:0},logs:[],bots:{},
+ network:{subscribed:false,joining:false,createToken:null,requestTimer:null}
 };
 
-const MapData={
- w:1800,h:1240,
- rooms:[
-  {n:"CENTRAL HALL",x:650,y:430,w:500,h:380},
-  {n:"REACTOR LAB",x:90,y:80,w:420,h:280},
-  {n:"SECURITY",x:1250,y:80,w:420,h:280},
-  {n:"STORAGE",x:90,y:800,w:420,h:300},
-  {n:"WORKSHOP",x:1250,y:800,w:420,h:300},
-  {n:"GARDEN",x:690,y:850,w:420,h:300}
- ],
- walls:[
-  [0,0,1800,35],[0,1205,1800,35],[0,0,35,1240],[1765,0,35,1240],
-  [550,0,35,430],[550,810,35,430],[1215,0,35,430],[1215,810,35,430],
-  [0,390,550,35],[0,760,550,35],[1250,390,515,35],[1250,760,515,35],
-  [585,390,630,35],[585,810,630,35],[585,0,35,390],[1215,0,35,390],
-  [585,810,35,430],[1215,810,35,430]
- ],
- obstacles:[[820,530,90,45],[940,650,120,42],[720,690,55,80],[1030,485,55,100],[330,160,70,70],[1400,180,90,55],[200,900,100,50],[1420,920,100,60]]
-};
-const TASKS=[
- ["wires","Nối dây",760,500],["code","Nhập mã",1020,730],["electric","Sửa điện",220,1010],
- ["machine","Khởi động máy",1450,990],["system","Kiểm tra hệ thống",1460,220],["garden","Chăm sóc vườn",850,1010]
-];
+const MapData={w:1800,h:1240,rooms:[
+ {n:"CENTRAL HALL",x:650,y:430,w:500,h:380},{n:"REACTOR LAB",x:90,y:80,w:420,h:280},
+ {n:"SECURITY",x:1250,y:80,w:420,h:280},{n:"STORAGE",x:90,y:800,w:420,h:300},
+ {n:"WORKSHOP",x:1250,y:800,w:420,h:300},{n:"GARDEN",x:690,y:850,w:420,h:300}],
+ walls:[[0,0,1800,35],[0,1205,1800,35],[0,0,35,1240],[1765,0,35,1240],
+ [550,0,35,430],[550,810,35,430],[1215,0,35,430],[1215,810,35,430],
+ [0,390,550,35],[0,760,550,35],[1250,390,515,35],[1250,760,515,35],
+ [585,390,630,35],[585,810,630,35],[585,0,35,390],[1215,0,35,390],
+ [585,810,35,430],[1215,810,35,430]],
+ obstacles:[[820,530,90,45],[940,650,120,42],[720,690,55,80],[1030,485,55,100],
+ [330,160,70,70],[1400,180,90,55],[200,900,100,50],[1420,920,100,60]]};
+const TASKS=[["wires","Nối dây",760,500],["code","Nhập mã",1020,730],["electric","Sửa điện",220,1010],
+["machine","Khởi động máy",1450,990],["system","Kiểm tra hệ thống",1460,220],["garden","Chăm sóc vườn",850,1010]];
 
 class CollisionSystem{
- static blocked(x,y,r=18){
-  if(x<r||y<r||x>MapData.w-r||y>MapData.h-r)return true;
-  for(const [a,b,w,h] of [...MapData.walls,...MapData.obstacles]){
-   if(x+r>a&&x-r<a+w&&y+r>b&&y-r<b+h)return true;
-  } return false;
- }
- static move(p,dx,dy){
-  const nx=p.x+dx,ny=p.y+dy;
-  if(!this.blocked(nx,p.y))p.x=nx;if(!this.blocked(p.x,ny))p.y=ny;
- }
+ static blocked(x,y,r=18){if(x<r||y<r||x>MapData.w-r||y>MapData.h-r)return true;
+  for(const [a,b,w,h] of [...MapData.walls,...MapData.obstacles])if(x+r>a&&x-r<a+w&&y+r>b&&y-r<b+h)return true;return false}
+ static move(p,dx,dy){const nx=p.x+dx,ny=p.y+dy;if(!this.blocked(nx,p.y))p.x=nx;if(!this.blocked(p.x,ny))p.y=ny}
 }
+
 class NetworkManager{
- static async connect(code){
-  GameState.channel=sb.channel("deceiver_v5_"+code,{config:{broadcast:{self:true},presence:{key:GameState.me.id}}});
-  GameState.channel.on("broadcast",{event:"state"},({payload})=>NetworkManager.apply(payload));
-  GameState.channel.on("broadcast",{event:"join"},({payload})=>{if(GameState.me?.id!==payload.id)NetworkManager.hostRefresh()});
-  GameState.channel.on("broadcast",{event:"leave"},({payload})=>{delete GameState.players[payload.id];renderLobby()});
-  GameState.channel.on("presence",{event:"sync"},()=>{GameState.connected=true;setNet("CONNECTED");if(GameState.hostId===GameState.me.id)NetworkManager.hostRefresh()});
-  await GameState.channel.subscribe();
+ static isHost(){return !!GameState.me&&GameState.hostId===GameState.me.id}
+ static waitForSubscribed(channel,timeout=12000){
+  if(GameState.network.subscribed)return Promise.resolve();
+  return new Promise((resolve,reject)=>{
+   let done=false;
+   const finish=(err)=>{if(done)return;done=true;clearTimeout(timer);err?reject(err):resolve()};
+   const timer=setTimeout(()=>finish(new Error("Supabase Realtime subscribe timeout")),timeout);
+   const old=GameState.network._subResolve;
+   GameState.network._subResolve=()=>{if(old)old();finish()};
+  });
  }
- static send(event,payload){if(GameState.channel)GameState.channel.send({type:"broadcast",event,payload})}
- static snapshot(){return {type:"state",room:GameState.room,hostId:GameState.hostId,cfg:GameState.cfg,players:GameState.players,phase:GameState.phase,round:GameState.round,roles:GameState.roles,alive:GameState.alive,tasks:GameState.tasks,bodies:GameState.bodies,meeting:GameState.meeting,serverTime:Date.now()}}
- static hostRefresh(){if(GameState.hostId===GameState.me.id)this.send("state",NetworkManager.snapshot())}
+ static async connect(code){
+  if(!code)throw new Error("ROOM CODE missing");
+  if(GameState.channel){try{await sb.removeChannel(GameState.channel)}catch(e){}GameState.channel=null}
+  GameState.room=code;GameState.network.subscribed=false;GameState.network.joining=false;
+  const channel=sb.channel("deceiver_v5_"+code,{config:{broadcast:{self:true},presence:{key:GameState.me.id}}});
+  GameState.channel=channel;
+
+  channel.on("broadcast",{event:"state"},({payload})=>NetworkManager.apply(payload));
+  channel.on("broadcast",{event:"request_join"},({payload})=>NetworkManager.onJoinRequest(payload));
+  channel.on("broadcast",{event:"request_state"},({payload})=>NetworkManager.onStateRequest(payload));
+  channel.on("broadcast",{event:"leave"},({payload})=>NetworkManager.onLeave(payload));
+  channel.on("broadcast",{event:"move"},({payload})=>NetworkManager.onMove(payload));
+  channel.on("broadcast",{event:"report"},({payload})=>NetworkManager.onReport(payload));
+  channel.on("presence",{event:"sync"},()=>{GameState.connected=true;setNet("CONNECTED");});
+  channel.on("presence",{event:"join"},()=>{});
+  channel.on("presence",{event:"leave"},()=>{});
+
+  await new Promise((resolve,reject)=>{
+    let settled=false;
+    const timer=setTimeout(()=>{if(!settled){settled=true;reject(new Error("Không thể subscribe Realtime."))}},12000);
+    const finish=()=>{if(settled)return;settled=true;clearTimeout(timer);GameState.network.subscribed=true;GameState.connected=true;setNet("CONNECTED");if(GameState.network._subResolve){const r=GameState.network._subResolve;GameState.network._subResolve=null;r()}resolve()};
+    channel.subscribe(status=>{if(status==="SUBSCRIBED")finish();else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){if(!settled){settled=true;clearTimeout(timer);reject(new Error("Realtime: "+status))}}});
+  });
+  return channel;
+ }
+ static send(event,payload){
+  if(!GameState.channel||!GameState.network.subscribed)return false;
+  GameState.channel.send({type:"broadcast",event,payload});
+  return true;
+ }
+ static snapshot(){
+  return {type:"state",version:5,room:GameState.room,hostId:GameState.hostId,cfg:GameState.cfg,
+   players:GameState.players,phase:GameState.phase,round:GameState.round,roles:GameState.roles,
+   alive:GameState.alive,tasks:GameState.tasks,bodies:GameState.bodies,meeting:GameState.meeting,serverTime:Date.now()};
+ }
+ static broadcastState(){if(!this.isHost()||!GameState.network.subscribed)return false;return this.send("state",this.snapshot())}
+ static hostRefresh(){return this.broadcastState()}
+ static onJoinRequest(payload){
+  if(!this.isHost()||!payload?.id||payload.id===GameState.me.id)return;
+  if(GameState.phase!=="lobby")return this.send("state",this.snapshot());
+  if(GameState.players[payload.id])return this.broadcastState();
+  const max=Number(GameState.cfg?.max||12);
+  if(Object.keys(GameState.players).length>=max)return this.send("join_reject",{id:payload.id,reason:"Phòng đã đầy."});
+  GameState.players[payload.id]={id:payload.id,name:String(payload.name||"Player").slice(0,18),bot:false,ready:true,x:900,y:620,dir:"down"};
+  GameState.alive[payload.id]=true;
+  this.broadcastState();
+ }
+ static onStateRequest(payload){
+  if(!this.isHost())return;
+  if(payload?.id===GameState.me?.id)return;
+  this.broadcastState();
+ }
+ static onLeave(payload){
+  if(!payload?.id)return;
+  if(this.isHost()){delete GameState.players[payload.id];delete GameState.alive[payload.id];this.broadcastState()}
+  else {delete GameState.players[payload.id];renderLobby()}
+ }
+ static onMove(payload){
+  if(!this.isHost()||payload?.id===GameState.me?.id||!GameState.players[payload?.id])return;
+  const p=GameState.players[payload.id];p.x=Number(payload.x)||p.x;p.y=Number(payload.y)||p.y;p.dir=payload.dir||p.dir;
+ }
+ static onReport(payload){
+  if(this.isHost()&&payload?.id&&GameState.alive[payload.id])MeetingSystem.open("BODY REPORTED");
+ }
  static apply(s){
   if(!s?.room)return;
+  if(GameState.room&&s.room!==GameState.room)return;
   const mine=GameState.me;
-  GameState.room=s.room;GameState.hostId=s.hostId;GameState.cfg=s.cfg;GameState.players=s.players||{};
-  GameState.phase=s.phase;GameState.round=s.round;GameState.roles=s.roles||{};GameState.alive=s.alive||{};
-  GameState.tasks=s.tasks||{};GameState.bodies=s.bodies||[];GameState.meeting=s.meeting||null;
+  GameState.room=s.room;GameState.hostId=s.hostId;GameState.cfg=s.cfg||GameState.cfg;
+  GameState.players=s.players||{};GameState.phase=s.phase||"lobby";GameState.round=s.round||1;
+  GameState.roles=s.roles||{};GameState.alive=s.alive||{};GameState.tasks=s.tasks||{};
+  GameState.bodies=s.bodies||[];GameState.meeting=s.meeting||null;
   if(mine&&GameState.players[mine.id])GameState.me=GameState.players[mine.id];
-  if(GameState.phase==="lobby"){show("lobby");renderLobby()}else if(GameState.phase==="game"){show("game");renderHUD()}else if(GameState.phase==="meeting"){show("game");renderHUD();openMeeting()}
+  if(GameState.phase==="lobby"){show("lobby");renderLobby()}
+  else if(GameState.phase==="game"){show("game");renderHUD()}
+  else if(GameState.phase==="meeting"){show("game");renderHUD();openMeeting()}
  }
- static createRoom(cfg){
-  GameState.room=cfg.code;GameState.cfg=cfg;GameState.hostId=GameState.me.id;
-  GameState.players={[GameState.me.id]:GameState.me}; GameState.phase="lobby";
+ static async initializeHostRoom(cfg){
+  // Critical ordering: create local state, subscribe, then become authoritative host and broadcast.
+  GameState.room=cfg.code;GameState.cfg=cfg;GameState.phase="lobby";GameState.hostId=null;
+  await this.connect(cfg.code);
+  GameState.hostId=GameState.me.id;
+  GameState.players={[GameState.me.id]:GameState.me};
+  GameState.alive={[GameState.me.id]:true};
+  GameState.bots={};
+  for(let i=0;i<cfg.bots;i++)PlayerSystem.addBot(i);
+  this.broadcastState();
+ }
+ static async requestJoin(){
+  if(!GameState.network.subscribed)throw new Error("Realtime chưa SUBSCRIBED");
+  GameState.network.joining=true;
+  this.send("request_join",{id:GameState.me.id,name:GameState.me.name,ts:Date.now()});
+  this.send("request_state",{id:GameState.me.id,ts:Date.now()});
+  clearTimeout(GameState.network.requestTimer);
+  GameState.network.requestTimer=setTimeout(()=>{
+   if(GameState.network.joining&&GameState.room&&!GameState.cfg){
+    this.send("request_state",{id:GameState.me.id,ts:Date.now()});
+    toast("Đang chờ Host phản hồi...");
+   }
+  },1200);
  }
 }
+
 class PlayerSystem{
- static addBot(i){
-  const id="bot_"+uid().slice(0,7), names=["Aster","Nova","Milo","Kiro","Lumi","Rin","Zed","Kai","Mira","Vex"];
+ static addBot(i){const id="bot_"+uid().slice(0,7),names=["Aster","Nova","Milo","Kiro","Lumi","Rin","Zed","Kai","Mira","Vex"];
   GameState.players[id]={id,name:names[i%names.length]+" "+(i+1),bot:true,ready:true,x:780+(i%4)*90,y:480+Math.floor(i/4)*90,dir:"down"};
-  GameState.alive[id]=true;GameState.bots[id]=new BotAI(id);
- }
- static addReal(name){
-  GameState.me={id:uid(),name,bot:false,ready:true,x:900,y:620,dir:"down"};
-  GameState.alive[GameState.me.id]=true;
- }
+  GameState.alive[id]=true;GameState.bots[id]=new BotAI(id)}
+ static addReal(name){GameState.me={id:uid(),name,bot:false,ready:true,x:900,y:620,dir:"down"};GameState.alive={};}
 }
+
 class TaskSystem{
- static init(){
-  GameState.tasks={};
-  TASKS.forEach((t,i)=>GameState.tasks["t"+i]={id:"t"+i,name:t[1],x:t[2],y:t[3],progress:0,owner:null,done:false});
- }
- static interact(){
-  const p=GameState.me;if(!p||GameState.roles[p.id]==="killer")return toast("Kẻ sát nhân không làm task thật.");
-  let best=null,bd=999;
-  for(const t of Object.values(GameState.tasks)){const d=Math.hypot(p.x-t.x,p.y-t.y);if(d<bd){bd=d;best=t}}
-  if(!best||bd>75)return toast("Đến gần trạm task hơn.");
-  if(best.done)return toast("Task này đã xong.");
-  best.progress=clamp(best.progress+25,0,100);best.owner=p.id;if(best.progress>=100)best.done=true;
-  syncHost();toast(best.done?"TASK HOÀN THÀNH":"Đang sửa...");
- }
+ static init(){GameState.tasks={};TASKS.forEach((t,i)=>GameState.tasks["t"+i]={id:"t"+i,name:t[1],x:t[2],y:t[3],progress:0,owner:null,done:false})}
+ static interact(){const p=GameState.me;if(!p||GameState.roles[p.id]==="killer")return toast("Kẻ sát nhân không làm task thật.");
+  let best=null,bd=999;for(const t of Object.values(GameState.tasks)){const d=Math.hypot(p.x-t.x,p.y-t.y);if(d<bd){bd=d;best=t}}
+  if(!best||bd>75)return toast("Đến gần trạm task hơn.");if(best.done)return toast("Task này đã xong.");
+  best.progress=clamp(best.progress+25,0,100);best.owner=p.id;if(best.progress>=100)best.done=true;syncHost();toast(best.done?"TASK HOÀN THÀNH":"Đang sửa...")}
  static percent(){const a=Object.values(GameState.tasks);return a.length?Math.round(a.filter(x=>x.done).length/a.length*100):0}
 }
 class EvidenceSystem{
- static event(type,actor,target,location,confidence=1){
-  for(const b of Object.values(GameState.bots)){if(b.memory)b.memory.remember({type,actor,target,location,time:Date.now(),confidence})}
- }
- static nearbyWitnesses(x,y,r=220){
-  return Object.values(GameState.players).filter(p=>GameState.alive[p.id]&&Math.hypot(p.x-x,p.y-y)<r).map(p=>p.id);
- }
+ static event(type,actor,target,location,confidence=1){for(const b of Object.values(GameState.bots)){if(b.memory)b.memory.remember({type,actor,target,location,time:Date.now(),confidence})}}
+ static nearbyWitnesses(x,y,r=220){return Object.values(GameState.players).filter(p=>GameState.alive[p.id]&&Math.hypot(p.x-x,p.y-y)<r).map(p=>p.id)}
 }
-class BotMemory{
- constructor(){this.events=[];this.suspicion={};this.statements={};this.history={};}
+class BotMemory{constructor(){this.events=[];this.suspicion={};this.statements={};this.history={}}
  remember(e){this.events.push(e);if(this.events.length>100)this.events.shift()}
  addSuspicion(id,v,why){this.suspicion[id]=clamp((this.suspicion[id]||0)+v,0,100);this.remember({type:"suspicion",target:id,value:v,why,time:Date.now(),confidence:.7})}
- score(id){return this.suspicion[id]||0}
-}
-class BotEvidence{
- static score(bot,target){
-  let s=bot.memory.score(target.id);
-  const recent=bot.memory.events.slice(-30);
-  for(const e of recent){
-   if(e.target===target.id&&e.type==="kill")s+=35*e.confidence;
-   if(e.actor===target.id&&e.type==="suspicious")s+=8*e.confidence;
-   if(e.actor===target.id&&e.type==="witnessed")s-=6*e.confidence;
-  }
-  return clamp(s,0,100);
- }
-}
-class BotDecision{
- static chooseVote(bot,alive){
-  const candidates=alive.filter(p=>p.id!==bot.id&&p.id!==GameState.me.id||bot.memory.score(p.id)>0);
-  if(!candidates.length)return null;
-  const scored=candidates.map(p=>({p,s:BotEvidence.score(bot,p)})).sort((a,b)=>b.s-a.s);
-  const top=scored[0]; const threshold=GameState.cfg.diff==="Easy"?70:GameState.cfg.diff==="Hardcore"?42:55;
-  return top.s>=threshold?top.p.id:null;
- }
- static update(bot){
-  const others=Object.values(GameState.players).filter(p=>p.id!==bot.id&&GameState.alive[p.id]);
-  for(const p of others){
-   const d=dist(bot,p);if(d<170&&GameState.roles[p.id]==="killer"&&GameState.roles[bot.id]!=="killer")bot.memory.addSuspicion(p.id,4,"gặp gần");
-  }
- }
-}
-class BotAI{
- constructor(id){this.id=id;this.memory=new BotMemory();this.lastThink=0;this.goal=null}
- tick(now){
-  if(now-this.lastThink<850)return;this.lastThink=now;
-  const bot=GameState.players[this.id];if(!bot||!GameState.alive[this.id])return;
-  BotDecision.update(this);
-  if(GameState.roles[this.id]==="killer")this.killerBrain(bot);else this.crewBrain(bot);
- }
- crewBrain(bot){
-  const alive=Object.values(GameState.players).filter(p=>GameState.alive[p.id]);
-  const suspects=alive.filter(p=>p.id!==this.id&&BotEvidence.score(this,p)>45);
-  if(suspects.length)this.goal={x:suspects[0].x,y:suspects[0].y};else{
-   const t=Object.values(GameState.tasks).find(t=>!t.done);if(t)this.goal={x:t.x,y:t.y}
-  }
-  this.moveToGoal(bot);
- }
- killerBrain(bot){
-  const crew=Object.values(GameState.players).filter(p=>GameState.alive[p.id]&&GameState.roles[p.id]!=="killer");
-  let target=crew.sort((a,b)=>dist(bot,a)-dist(bot,b))[0];
-  if(target&&dist(bot,target)<95){hostKill(this.id,target.id);return}
-  if(target)this.goal={x:target.x,y:target.y};this.moveToGoal(bot);
- }
- moveToGoal(bot){
-  if(!this.goal)return;
-  const dx=this.goal.x-bot.x,dy=this.goal.y-bot.y,d=Math.hypot(dx,dy);if(d<8)return;
-  CollisionSystem.move(bot,dx/d*22,dy/d*22);bot.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up");
-  if(GameState.hostId===GameState.me.id)NetworkManager.hostRefresh();
- }
-}
+ score(id){return this.suspicion[id]||0}}
+class BotEvidence{static score(bot,target){let s=bot.memory.score(target.id),recent=bot.memory.events.slice(-30);
+ for(const e of recent){if(e.target===target.id&&e.type==="kill")s+=35*e.confidence;if(e.actor===target.id&&e.type==="suspicious")s+=8*e.confidence;if(e.actor===target.id&&e.type==="witnessed")s-=6*e.confidence}
+ return clamp(s,0,100)}}
+class BotDecision{static chooseVote(bot,alive){const candidates=alive.filter(p=>p.id!==bot.id&&p.id!==GameState.me.id||bot.memory.score(p.id)>0);if(!candidates.length)return null;
+ const scored=candidates.map(p=>({p,s:BotEvidence.score(bot,p)})).sort((a,b)=>b.s-a.s),top=scored[0],threshold=GameState.cfg.diff==="Easy"?70:GameState.cfg.diff==="Hardcore"?42:55;return top.s>=threshold?top.p.id:null}
+ static update(bot){const others=Object.values(GameState.players).filter(p=>p.id!==bot.id&&GameState.alive[p.id]);for(const p of others){const d=dist(bot,p);if(d<170&&GameState.roles[p.id]==="killer"&&GameState.roles[bot.id]!=="killer")bot.memory.addSuspicion(p.id,4,"gặp gần")}}}
+class BotAI{constructor(id){this.id=id;this.memory=new BotMemory();this.lastThink=0;this.goal=null}
+ tick(now){if(now-this.lastThink<850)return;this.lastThink=now;const bot=GameState.players[this.id];if(!bot||!GameState.alive[this.id])return;BotDecision.update(this);
+  if(GameState.roles[this.id]==="killer")this.killerBrain(bot);else this.crewBrain(bot)}
+ crewBrain(bot){const alive=Object.values(GameState.players).filter(p=>GameState.alive[p.id]),suspects=alive.filter(p=>p.id!==this.id&&BotEvidence.score(this,p)>45);
+  if(suspects.length)this.goal={x:suspects[0].x,y:suspects[0].y};else{const t=Object.values(GameState.tasks).find(t=>!t.done);if(t)this.goal={x:t.x,y:t.y}}this.moveToGoal(bot)}
+ killerBrain(bot){const crew=Object.values(GameState.players).filter(p=>GameState.alive[p.id]&&GameState.roles[p.id]!=="killer");let target=crew.sort((a,b)=>dist(bot,a)-dist(bot,b))[0];
+  if(target&&dist(bot,target)<95){hostKill(this.id,target.id);return}if(target)this.goal={x:target.x,y:target.y};this.moveToGoal(bot)}
+ moveToGoal(bot){if(!this.goal)return;const dx=this.goal.x-bot.x,dy=this.goal.y-bot.y,d=Math.hypot(dx,dy);if(d<8)return;CollisionSystem.move(bot,dx/d*22,dy/d*22);
+  bot.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up");if(NetworkManager.isHost())NetworkManager.hostRefresh()}}
 class MeetingSystem{
- static open(reason="REPORT"){
-  if(GameState.phase!=="game")return;
-  GameState.phase="meeting";GameState.meeting={reason,started:Date.now(),votes:{},statements:{}};
-  NetworkManager.hostRefresh();openMeeting();
- }
- static vote(id){
-  if(!GameState.meeting||!GameState.alive[GameState.me.id])return;
-  GameState.meeting.votes[GameState.me.id]=id||"skip";syncHost();toast("Đã ghi phiếu.");
- }
- static resolve(){
-  if(GameState.hostId!==GameState.me.id)return;
-  const v=GameState.meeting.votes, tally={};Object.values(v).forEach(x=>tally[x]=(tally[x]||0)+1);
-  const top=Object.entries(tally).filter(([k])=>k!=="skip").sort((a,b)=>b[1]-a[1]);
-  let out=null;if(top.length&&(!Object.values(tally).includes(top[0][1],1)||top.length===1))out=top[0][0];
-  if(out&&GameState.alive[out]){GameState.alive[out]=false;GameState.bodies.push({id:out,x:GameState.players[out].x,y:GameState.players[out].y});}
-  GameState.phase="game";GameState.meeting=null;checkWin();NetworkManager.hostRefresh();
- }
-}
-class VentSystem{static use(){if(GameState.roles[GameState.me.id]!=="killer")return toast("Chỉ sát nhân dùng được tunnel.");toast("VENT: prototype tunnel active.");}}
+ static open(reason="REPORT"){if(GameState.phase!=="game")return;GameState.phase="meeting";GameState.meeting={reason,started:Date.now(),votes:{},statements:{}};
+  syncHost();openMeeting()}
+ static vote(id){if(!GameState.meeting||!GameState.alive[GameState.me.id])return;GameState.meeting.votes[GameState.me.id]=id||"skip";syncHost();toast("Đã ghi phiếu.")}
+ static resolve(){if(!NetworkManager.isHost())return;const v=GameState.meeting.votes,tally={};Object.values(v).forEach(x=>tally[x]=(tally[x]||0)+1);
+  const top=Object.entries(tally).filter(([k])=>k!=="skip").sort((a,b)=>b[1]-a[1]);let out=null;if(top.length&&(!Object.values(tally).includes(top[0][1],1)||top.length===1))out=top[0][0];
+  if(out&&GameState.alive[out]){GameState.alive[out]=false;GameState.bodies.push({id:out,x:GameState.players[out].x,y:GameState.players[out].y})}
+  GameState.phase="game";GameState.meeting=null;checkWin();NetworkManager.hostRefresh()}}
+class VentSystem{static use(){if(GameState.roles[GameState.me.id]!=="killer")return toast("Chỉ sát nhân dùng được tunnel.");toast("VENT: prototype tunnel active.")}}
 class SecuritySystem{static open(){openModal(`<h2>SECURITY</h2><p>CAM 01–04 • Góc nhìn giới hạn • Không hiển thị role.</p><div class="log">CAM 01: Central Hall<br>CAM 02: Reactor Lab<br>CAM 03: Storage<br>CAM 04: Workshop</div><div class="actions"><button onclick="closeModal()">ĐÓNG</button></div>`)}}
-class WinSystem{
- static check(){
-  const alive=Object.values(GameState.players).filter(p=>GameState.alive[p.id]);
-  const killers=alive.filter(p=>GameState.roles[p.id]==="killer");
-  const crew=alive.filter(p=>GameState.roles[p.id]!=="killer");
-  if(TaskSystem.percent()===100)return GameState.phase="result",showResult("CREW THẮNG","Tất cả task đã hoàn thành.");
-  if(!killers.length)return GameState.phase="result",showResult("CREW THẮNG","Tất cả sát nhân đã bị loại.");
-  if(killers.length>=crew.length)return GameState.phase="result",showResult("KILLER THẮNG","Số sát nhân còn lại đã áp đảo crew.");
- }
-}
+class WinSystem{static check(){const alive=Object.values(GameState.players).filter(p=>GameState.alive[p.id]),killers=alive.filter(p=>GameState.roles[p.id]==="killer"),crew=alive.filter(p=>GameState.roles[p.id]!=="killer");
+ if(TaskSystem.percent()===100)return GameState.phase="result",showResult("CREW THẮNG","Tất cả task đã hoàn thành.");
+ if(!killers.length)return GameState.phase="result",showResult("CREW THẮNG","Tất cả sát nhân đã bị loại.");
+ if(killers.length>=crew.length)return GameState.phase="result",showResult("KILLER THẮNG","Số sát nhân còn lại đã áp đảo crew.")}}
 function checkWin(){WinSystem.check()}
-function syncHost(){if(GameState.hostId===GameState.me.id)NetworkManager.hostRefresh()}
-function hostKill(actor,target){
- if(GameState.hostId!==GameState.me.id)return;
- if(GameState.roles[actor]!=="killer"||!GameState.alive[actor]||!GameState.alive[target])return;
- const a=GameState.players[actor],b=GameState.players[target];if(dist(a,b)>105)return;
- GameState.alive[target]=false;GameState.bodies.push({id:target,x:b.x,y:b.y});EvidenceSystem.event("kill",actor,target,`${Math.round(b.x)},${Math.round(b.y)}`,.9);checkWin();NetworkManager.hostRefresh();
-}
-function startGame(){
- if(GameState.hostId!==GameState.me.id)return toast("Chỉ Host được START.");
- const ids=Object.keys(GameState.players);if(ids.length<3)return toast("Cần ít nhất 3 người + bot.");
- if(GameState.cfg.killers>=ids.length)return toast("Số killer phải nhỏ hơn tổng người.");
- GameState.phase="game";GameState.round=1;GameState.alive={};GameState.roles={};
- ids.forEach(id=>GameState.alive[id]=true);
+function syncHost(){if(NetworkManager.isHost())NetworkManager.hostRefresh()}
+function hostKill(actor,target){if(!NetworkManager.isHost())return;if(GameState.roles[actor]!=="killer"||!GameState.alive[actor]||!GameState.alive[target])return;
+ const a=GameState.players[actor],b=GameState.players[target];if(dist(a,b)>105)return;GameState.alive[target]=false;GameState.bodies.push({id:target,x:b.x,y:b.y});
+ EvidenceSystem.event("kill",actor,target,`${Math.round(b.x)},${Math.round(b.y)}`,.9);checkWin();NetworkManager.hostRefresh()}
+function startGame(){if(!NetworkManager.isHost())return toast("Chỉ Host được START.");const ids=Object.keys(GameState.players);if(ids.length<3)return toast("Cần ít nhất 3 người + bot.");
+ if(GameState.cfg.killers>=ids.length)return toast("Số killer phải nhỏ hơn tổng người.");GameState.phase="game";GameState.round=1;GameState.alive={};GameState.roles={};ids.forEach(id=>GameState.alive[id]=true);
  const shuffled=[...ids].sort(()=>Math.random()-.5);shuffled.slice(0,GameState.cfg.killers).forEach(id=>GameState.roles[id]="killer");ids.forEach(id=>{if(!GameState.roles[id])GameState.roles[id]="crew"});
- TaskSystem.init();Object.values(GameState.players).forEach((p,i)=>{p.x=760+(i%5)*95;p.y=540+Math.floor(i/5)*100});
- NetworkManager.hostRefresh();show("game");roleReveal();
-}
+ TaskSystem.init();Object.values(GameState.players).forEach((p,i)=>{p.x=760+(i%5)*95;p.y=540+Math.floor(i/5)*100});NetworkManager.hostRefresh();show("game");roleReveal()}
 function roleReveal(){const role=GameState.roles[GameState.me.id];openModal(`<h2>ROLE REVEAL</h2><div style="font-size:34px;margin:25px 0">${role==="killer"?"🔻 KẺ SÁT NHÂN":"🦆 NGƯỜI THƯỜNG"}</div><p>${role==="killer"?"Hạ mục tiêu, đừng để bị phát hiện.":"Hoàn thành task và tìm ra sát nhân."}</p><div class="actions"><button class="primary" onclick="closeModal()">VÀO GAME</button></div>`)}
-function renderLobby(){
- if(!GameState.cfg)return;
- $("roomTitle").textContent=GameState.room;$("count").textContent=`${Object.keys(GameState.players).length}/${GameState.cfg.max}`;
+function renderLobby(){if(!GameState.cfg)return;$("roomTitle").textContent=GameState.room;$("count").textContent=`${Object.keys(GameState.players).length}/${GameState.cfg.max}`;
  $("hostName").textContent=GameState.players[GameState.hostId]?.name||"—";$("lKill").textContent=GameState.cfg.killers;$("lDiff").textContent=GameState.cfg.diff;
- $("startBtn").style.display=GameState.hostId===GameState.me.id?"inline-block":"none";
- $("playerGrid").innerHTML=Object.values(GameState.players).map(p=>`<div class="player"><div class="duck">🦆</div><b>${esc(p.name)}</b><div class="small">${p.bot?"BOT":"PLAYER"} ${p.id===GameState.hostId?"• HOST":""}</div></div>`).join("");
-}
-function renderHUD(){
- const role=GameState.roles[GameState.me.id];$("hudRole").textContent=GameState.alive[GameState.me.id]?(role==="killer"?"KẺ SÁT NHÂN":"NGƯỜI THƯỜNG"):"GHOST";
+ $("startBtn").style.display=NetworkManager.isHost()?"inline-block":"none";$("playerGrid").innerHTML=Object.values(GameState.players).map(p=>`<div class="player"><div class="duck">🦆</div><b>${esc(p.name)}</b><div class="small">${p.bot?"BOT":"PLAYER"} ${p.id===GameState.hostId?"• HOST":""}</div></div>`).join("")}
+function renderHUD(){const role=GameState.roles[GameState.me.id];$("hudRole").textContent=GameState.alive[GameState.me.id]?(role==="killer"?"KẺ SÁT NHÂN":"NGƯỜI THƯỜNG"):"GHOST";
  $("hudRound").textContent=`Round ${GameState.round}/${GameState.cfg?.rounds||1}`;$("taskTxt").textContent=TaskSystem.percent()+"%";$("taskBar").style.width=TaskSystem.percent()+"%";
- $("aliveTxt").textContent=`Alive ${Object.values(GameState.alive).filter(Boolean).length}/${Object.keys(GameState.players).length}`;
- $("killBtn").style.display=role==="killer"?"block":"none";$("ventBtn").style.display=role==="killer"?"block":"none";
-}
-function openMeeting(){
- if(!GameState.meeting)return;
- const alive=Object.values(GameState.players).filter(p=>GameState.alive[p.id]);
- $("modal").innerHTML=`<h2>MEETING • ${esc(GameState.meeting.reason)}</h2><p class="small">Thảo luận và bỏ phiếu. Người chết không được vote.</p><div class="meetingList">${alive.map(p=>`<button class="vote" onclick="MeetingSystem.vote('${p.id}')">🦆 ${esc(p.name)}<br><span class="small">Nghi ngờ / Vote</span></button>`).join("")}<button class="vote" onclick="MeetingSystem.vote('skip')">⏭ SKIP</button></div><div class="actions"><button onclick="submitStatement()">GỬI LẬP LUẬN</button>${GameState.hostId===GameState.me.id?'<button class="primary" onclick="MeetingSystem.resolve()">KẾT THÚC VOTE</button>':''}</div><input id="statement" maxlength="240" placeholder="Bạn muốn nói gì?"><div class="log" id="stmtLog">${Object.entries(GameState.meeting.statements||{}).map(([id,s])=>`${esc(GameState.players[id]?.name||id)}: ${esc(s)}`).join("<br>")}</div>`;
- $("overlay").classList.remove("hidden");
-}
+ $("aliveTxt").textContent=`Alive ${Object.values(GameState.alive).filter(Boolean).length}/${Object.keys(GameState.players).length}`;$("killBtn").style.display=role==="killer"?"block":"none";$("ventBtn").style.display=role==="killer"?"block":"none"}
+function openMeeting(){if(!GameState.meeting)return;const alive=Object.values(GameState.players).filter(p=>GameState.alive[p.id]);
+ $("modal").innerHTML=`<h2>MEETING • ${esc(GameState.meeting.reason)}</h2><p class="small">Thảo luận và bỏ phiếu. Người chết không được vote.</p><div class="meetingList">${alive.map(p=>`<button class="vote" onclick="MeetingSystem.vote('${p.id}')">🦆 ${esc(p.name)}<br><span class="small">Nghi ngờ / Vote</span></button>`).join("")}<button class="vote" onclick="MeetingSystem.vote('skip')">⏭ SKIP</button></div><div class="actions"><button onclick="submitStatement()">GỬI LẬP LUẬN</button>${NetworkManager.isHost()?'<button class="primary" onclick="MeetingSystem.resolve()">KẾT THÚC VOTE</button>':''}</div><input id="statement" maxlength="240" placeholder="Bạn muốn nói gì?"><div class="log" id="stmtLog">${Object.entries(GameState.meeting.statements||{}).map(([id,s])=>`${esc(GameState.players[id]?.name||id)}: ${esc(s)}`).join("<br>")}</div>`;
+ $("overlay").classList.remove("hidden")}
 function submitStatement(){const s=$("statement").value.trim();if(!s)return toast("Bạn chưa đưa ra lập luận. Những người khác có thể nghi ngờ bạn.");GameState.meeting.statements[GameState.me.id]=s;syncHost();openMeeting()}
 function showResult(title,text){openModal(`<h1>${title}</h1><p>${text}</p><div class="actions"><button class="primary" onclick="nextRound()">ROUND TIẾP</button><button onclick="leaveRoom()">VỀ MENU</button></div>`)}
-function nextRound(){if(GameState.hostId!==GameState.me.id)return;GameState.round++;if(GameState.round>GameState.cfg.rounds){showResult("KẾT THÚC","Đã hoàn thành toàn bộ số round.");return}GameState.phase="game";GameState.bodies=[];TaskSystem.init();const ids=Object.keys(GameState.players);GameState.roles={};ids.sort(()=>Math.random()-.5).slice(0,GameState.cfg.killers).forEach(id=>GameState.roles[id]="killer");ids.forEach(id=>{GameState.roles[id]??="crew";GameState.alive[id]=true});syncHost();roleReveal()}
-function openModal(html){$("modal").innerHTML=html;$("overlay").classList.remove("hidden")}
-function closeModal(){$("overlay").classList.add("hidden")}
+function nextRound(){if(!NetworkManager.isHost())return;GameState.round++;if(GameState.round>GameState.cfg.rounds){showResult("KẾT THÚC","Đã hoàn thành toàn bộ số round.");return}
+ GameState.phase="game";GameState.bodies=[];TaskSystem.init();const ids=Object.keys(GameState.players);GameState.roles={};ids.sort(()=>Math.random()-.5).slice(0,GameState.cfg.killers).forEach(id=>GameState.roles[id]="killer");
+ ids.forEach(id=>{GameState.roles[id]??="crew";GameState.alive[id]=true});syncHost();roleReveal()}
+function openModal(html){$("modal").innerHTML=html;$("overlay").classList.remove("hidden")}function closeModal(){$("overlay").classList.add("hidden")}
 function show(id){["home","lobby","game"].forEach(x=>$(x).classList.add("hidden"));$(id).classList.remove("hidden");GameState.screen=id}
 function toast(t){$("toast").textContent=t;$("toast").classList.remove("hidden");clearTimeout(toast.t);toast.t=setTimeout(()=>$("toast").classList.add("hidden"),2500)}
 function setNet(s){$("netStatus").textContent=s}
+
 async function createRoom(){
  const name=$("cName").value.trim(),max=+$("cMax").value,killers=+$("cKillers").value,bots=+$("cBots").value,code=($("cCode").value.trim()||code6()).toUpperCase();
- if(name.length<1||name.length>18)return toast("Tên không hợp lệ.");if(!/^[A-Z0-9]{4,6}$/.test(code))return toast("Mã phòng 4–6 ký tự A-Z/0-9.");if(killers>=max)return toast("Killer phải ít hơn max players.");if(bots+1>max)return toast("Bot vượt quá số người tối đa.");
- PlayerSystem.addReal(name);GameState.cfg={code,max,killers,bots,diff:$("cDiff").value,rounds:+$("cRounds").value,dead:$("cDead").value==="1",role:$("cRole").value==="1"};
- NetworkManager.createRoom(GameState.cfg);for(let i=0;i<bots;i++)PlayerSystem.addBot(i);
- await NetworkManager.connect(code);NetworkManager.hostRefresh();show("lobby");renderLobby();toast("Phòng đã tạo: "+code);
+ if(name.length<1||name.length>18)return toast("Tên không hợp lệ.");if(!/^[A-Z0-9]{4,6}$/.test(code))return toast("Mã phòng 4–6 ký tự A-Z/0-9.");
+ if(killers>=max)return toast("Killer phải ít hơn max players.");if(bots+1>max)return toast("Bot vượt quá số người tối đa.");
+ try{
+  $("createBtn").disabled=true;setNet("SUBSCRIBING...");
+  PlayerSystem.addReal(name);
+  GameState.cfg={code,max,killers,bots,diff:$("cDiff").value,rounds:+$("cRounds").value,dead:$("cDead").value==="1",role:$("cRole").value==="1"};
+  await NetworkManager.initializeHostRoom(GameState.cfg);
+  // Only after SUBSCRIBED + host state initialization do we enter Lobby and broadcast.
+  show("lobby");renderLobby();NetworkManager.hostRefresh();toast("Phòng đã tạo: "+code);
+ }catch(e){console.error(e);toast("Không thể tạo phòng: "+(e.message||e));GameState.network.subscribed=false}
+ finally{$("createBtn").disabled=false}
 }
+
 async function joinRoom(){
  const name=$("jName").value.trim(),code=$("jCode").value.trim().toUpperCase();
  if(!name||name.length>18)return toast("Tên không hợp lệ.");if(!/^[A-Z0-9]{4,6}$/.test(code))return toast("Mã phòng không hợp lệ.");
- PlayerSystem.addReal(name);GameState.room=code;await NetworkManager.connect(code);NetworkManager.send("join",{id:GameState.me.id,name});setNet("CONNECTED");show("lobby");
- setTimeout(()=>{if(!GameState.cfg)toast("Không tìm thấy phòng hoặc Host chưa online.");},1800);
+ try{
+  $("joinBtn").disabled=true;setNet("SUBSCRIBING...");PlayerSystem.addReal(name);GameState.room=code;
+  await NetworkManager.connect(code);
+  // Never insert ourselves locally as a player. The Host is authoritative.
+  await NetworkManager.requestJoin();
+  show("lobby");renderLobby();
+  setTimeout(()=>{if(!GameState.cfg)toast("Đang chờ Host gửi state...")},1800);
+ }catch(e){console.error(e);toast("Không thể vào phòng: "+(e.message||e))}
+ finally{$("joinBtn").disabled=false}
 }
-function leaveRoom(){if(GameState.channel)NetworkManager.send("leave",{id:GameState.me?.id});if(GameState.channel)sb.removeChannel(GameState.channel);location.reload()}
-function networkTick(){
- if(GameState.hostId===GameState.me.id){
-  for(const b of Object.values(GameState.bots))b.tick(performance.now());
- }
-}
+
+function leaveRoom(){if(GameState.channel&&GameState.network.subscribed)NetworkManager.send("leave",{id:GameState.me?.id});if(GameState.channel)sb.removeChannel(GameState.channel);location.reload()}
+
+function networkTick(){if(NetworkManager.isHost())for(const b of Object.values(GameState.bots))b.tick(performance.now())}
+
 const cv=$("cv"),ctx=cv.getContext("2d");
 function resize(){cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}
 addEventListener("resize",resize);resize();
-function draw(){
- if(GameState.screen!=="game")return requestAnimationFrame(draw);
- const p=GameState.me;if(!p)return requestAnimationFrame(draw);
+function draw(){if(GameState.screen!=="game")return requestAnimationFrame(draw);const p=GameState.me;if(!p)return requestAnimationFrame(draw);
  const W=innerWidth,H=innerHeight;GameState.cam.x=clamp(p.x-W/2,0,MapData.w-W);GameState.cam.y=clamp(p.y-H/2,0,MapData.h-H);
- ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(-GameState.cam.x,-GameState.cam.y);
- ctx.fillStyle="#07101c";ctx.fillRect(0,0,MapData.w,MapData.h);
+ ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(-GameState.cam.x,-GameState.cam.y);ctx.fillStyle="#07101c";ctx.fillRect(0,0,MapData.w,MapData.h);
  for(const r of MapData.rooms){ctx.fillStyle="#0c1725";ctx.fillRect(r.x,r.y,r.w,r.h);ctx.strokeStyle="#1d2d44";ctx.strokeRect(r.x,r.y,r.w,r.h);ctx.fillStyle="#42526b";ctx.font="12px system-ui";ctx.fillText(r.n,r.x+12,r.y+22)}
- ctx.fillStyle="#172338";for(const [x,y,w,h] of MapData.walls)ctx.fillRect(x,y,w,h);
- ctx.fillStyle="#202e42";for(const [x,y,w,h] of MapData.obstacles)ctx.fillRect(x,y,w,h);
+ ctx.fillStyle="#172338";for(const [x,y,w,h] of MapData.walls)ctx.fillRect(x,y,w,h);ctx.fillStyle="#202e42";for(const [x,y,w,h] of MapData.obstacles)ctx.fillRect(x,y,w,h);
  for(const t of Object.values(GameState.tasks)){ctx.beginPath();ctx.arc(t.x,t.y,15,0,Math.PI*2);ctx.fillStyle=t.done?"#275f52":"#174b5a";ctx.fill();ctx.strokeStyle="#67e8f9";ctx.stroke()}
  for(const b of GameState.bodies){ctx.beginPath();ctx.arc(b.x,b.y,14,0,Math.PI*2);ctx.fillStyle="#4b2633";ctx.fill();ctx.strokeStyle="#fb7185";ctx.stroke()}
- for(const pl of Object.values(GameState.players)){if(!GameState.alive[pl.id]&&!GameState.cfg.dead)continue;drawDuck(pl,pl.id===p.id)}
- ctx.restore();requestAnimationFrame(draw)
-}
-function drawDuck(pl,self){
- ctx.save();ctx.translate(pl.x,pl.y);ctx.fillStyle=GameState.roles[pl.id]==="killer"&&self?"#fb7185":"#f6c453";ctx.beginPath();ctx.arc(0,0,19,0,Math.PI*2);ctx.fill();ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(7,-7,5,0,Math.PI*2);ctx.fill();ctx.fillStyle="#111";ctx.beginPath();ctx.arc(8,-7,2,0,Math.PI*2);ctx.fill();ctx.fillStyle="#f59e0b";ctx.fillRect(13,0,10,5);ctx.fillStyle="#eef4ff";ctx.font="12px system-ui";ctx.textAlign="center";ctx.fillText(pl.name,0,-28);ctx.restore()
-}
-function moveLocal(dt){
- const p=GameState.me;if(!p||GameState.screen!=="game"||!GameState.alive[p.id])return;
- let x=0,y=0;if(GameState.keys.ArrowUp||GameState.keys.w)y--;if(GameState.keys.ArrowDown||GameState.keys.s)y++;if(GameState.keys.ArrowLeft||GameState.keys.a)x--;if(GameState.keys.ArrowRight||GameState.keys.d)x++;
- if(x||y){const d=Math.hypot(x,y);CollisionSystem.move(p,x/d*170*dt,y/d*170*dt);p.dir=Math.abs(x)>Math.abs(y)?(x>0?"right":"left"):(y>0?"down":"up");NetworkManager.send("move",{id:p.id,x:p.x,y:p.y,dir:p.dir})}
-}
+ for(const pl of Object.values(GameState.players)){if(!GameState.alive[pl.id]&&!GameState.cfg.dead)continue;drawDuck(pl,pl.id===p.id)}ctx.restore();requestAnimationFrame(draw)}
+function drawDuck(pl,self){ctx.save();ctx.translate(pl.x,pl.y);ctx.fillStyle=GameState.roles[pl.id]==="killer"&&self?"#fb7185":"#f6c453";ctx.beginPath();ctx.arc(0,0,19,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(7,-7,5,0,Math.PI*2);ctx.fill();ctx.fillStyle="#111";ctx.beginPath();ctx.arc(8,-7,2,0,Math.PI*2);ctx.fill();ctx.fillStyle="#f59e0b";ctx.fillRect(13,0,10,5);ctx.fillStyle="#eef4ff";ctx.font="12px system-ui";ctx.textAlign="center";ctx.fillText(pl.name,0,-28);ctx.restore()}
+function moveLocal(dt){const p=GameState.me;if(!p||GameState.screen!=="game"||!GameState.alive[p.id])return;let x=0,y=0;
+ if(GameState.keys.ArrowUp||GameState.keys.w)y--;if(GameState.keys.ArrowDown||GameState.keys.s)y++;if(GameState.keys.ArrowLeft||GameState.keys.a)x--;if(GameState.keys.ArrowRight||GameState.keys.d)x++;
+ if(x||y){const d=Math.hypot(x,y);CollisionSystem.move(p,x/d*170*dt,y/d*170*dt);p.dir=Math.abs(x)>Math.abs(y)?(x>0?"right":"left"):(y>0?"down":"up");NetworkManager.send("move",{id:p.id,x:p.x,y:p.y,dir:p.dir})}}
 addEventListener("keydown",e=>{GameState.keys[e.key]=true});addEventListener("keyup",e=>{GameState.keys[e.key]=false});
 document.querySelectorAll("[data-key]").forEach(b=>{const k=b.dataset.key,map={up:"ArrowUp",down:"ArrowDown",left:"ArrowLeft",right:"ArrowRight"};b.addEventListener("pointerdown",()=>GameState.keys[map[k]]=true);b.addEventListener("pointerup",()=>GameState.keys[map[k]]=false);b.addEventListener("pointerleave",()=>GameState.keys[map[k]]=false)});
 function gameLoop(t){const dt=Math.min(.05,(t-(GameState.local.last||t))/1000);GameState.local.last=t;moveLocal(dt);networkTick();requestAnimationFrame(gameLoop)}
-setInterval(()=>{if(GameState.hostId===GameState.me?.id)NetworkManager.hostRefresh()},900);
-sb.channel; requestAnimationFrame(draw);requestAnimationFrame(gameLoop);
+setInterval(()=>{if(NetworkManager.isHost())NetworkManager.hostRefresh()},900);
+requestAnimationFrame(draw);requestAnimationFrame(gameLoop);
 
 $("tabCreate").onclick=()=>{$("tabCreate").classList.add("active");$("tabJoin").classList.remove("active");$("createForm").classList.remove("hidden");$("joinForm").classList.add("hidden")};
 $("tabJoin").onclick=()=>{$("tabJoin").classList.add("active");$("tabCreate").classList.remove("active");$("joinForm").classList.remove("hidden");$("createForm").classList.add("hidden")};
-$("createBtn").onclick=createRoom;$("joinBtn").onclick=joinRoom;$("startBtn").onclick=startGame;$("leaveBtn").onclick=leaveRoom;$("copyBtn").onclick=()=>navigator.clipboard?.writeText(GameState.room).then(()=>toast("Đã copy mã phòng."));
-$("taskBtn").onclick=()=>{TaskSystem.interact();syncHost();renderHUD()};$("reportBtn").onclick=()=>{const near=GameState.bodies.find(b=>dist(b,GameState.me)<90);if(near){if(GameState.hostId===GameState.me.id)MeetingSystem.open("BODY REPORTED");else NetworkManager.send("report",{id:GameState.me.id,body:near.id})}else toast("Không có body gần bạn.")};
+$("createBtn").onclick=createRoom;$("joinBtn").onclick=joinRoom;$("startBtn").onclick=startGame;$("leaveBtn").onclick=leaveRoom;
+$("copyBtn").onclick=()=>navigator.clipboard?.writeText(GameState.room).then(()=>toast("Đã copy mã phòng."));
+$("taskBtn").onclick=()=>{TaskSystem.interact();syncHost();renderHUD()};
+$("reportBtn").onclick=()=>{const near=GameState.bodies.find(b=>dist(b,GameState.me)<90);if(near){if(NetworkManager.isHost())MeetingSystem.open("BODY REPORTED");else NetworkManager.send("report",{id:GameState.me.id,body:near.id})}else toast("Không có body gần bạn.")};
 $("killBtn").onclick=()=>{const me=GameState.me,target=Object.values(GameState.players).filter(p=>p.id!==me.id&&GameState.alive[p.id]&&GameState.roles[p.id]!=="killer").sort((a,b)=>dist(me,a)-dist(me,b))[0];if(target)hostKill(me.id,target.id);else toast("Không có mục tiêu.")};
 $("ventBtn").onclick=()=>VentSystem.use();$("secBtn").onclick=()=>SecuritySystem.open();$("meetBtn").onclick=()=>MeetingSystem.open("EMERGENCY");
-sb.channel;
-/* Host receives movement/report requests from clients. */
-const oldConnect=NetworkManager.connect;
-NetworkManager.connect=async function(code){
- await oldConnect.call(NetworkManager,code);
- GameState.channel.on("broadcast",{event:"move"},({payload})=>{if(GameState.hostId===GameState.me.id&&payload.id!==GameState.me.id&&GameState.players[payload.id]){GameState.players[payload.id].x=payload.x;GameState.players[payload.id].y=payload.y;GameState.players[payload.id].dir=payload.dir}});
- GameState.channel.on("broadcast",{event:"report"},({payload})=>{if(GameState.hostId===GameState.me.id&&GameState.alive[payload.id])MeetingSystem.open("BODY REPORTED")});
- GameState.channel.on("broadcast",{event:"state"},()=>{});
-};
 </script>
 </body>
 </html>
